@@ -48,7 +48,7 @@ class particle //: public TObject
   
   void SetP(double px,double py,double pz){fPx=px,fPy=py,fPz=pz;};
   
-  static const int fMaxNumParticleType=10; //reso public per funzionare in root
+  static const int fMaxNumParticleType=50; //reso public per funzionare in root
  private:
 
   void Boost(double bx, double by, double bz);
