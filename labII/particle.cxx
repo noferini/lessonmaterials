@@ -252,3 +252,115 @@ double particle::InvMass(particle & other) const{
   return sqrt(energy*energy - p2);
 
 }
+
+int particle::Decay2body(particle &dau1,particle &dau2,float mass,float px,float py,float pz) {
+  if(mass == 0.0){
+    printf("Decayment cannot be preformed if mass is zero\n");
+    return 1;
+  }
+  
+  double massMot = mass;
+  double massDau1 = dau1.GetMass();
+  double massDau2 = dau2.GetMass();
+
+  if(massMot < massDau1 + massDau2){
+    printf("Decayment cannot be preformed because mass is too low in this channel\n");
+    return 2;
+  }
+  
+  double pout = sqrt((massMot*massMot - (massDau1+massDau2)*(massDau1+massDau2))*(massMot*massMot - (massDau1-massDau2)*(massDau1-massDau2)))/massMot*0.5;
+
+  double norm = 6.283/RAND_MAX;
+
+  double phi = rand()*norm;
+  double theta = rand()*norm*0.5 - 1.57075;
+  dau1.SetP(pout*sin(theta)*cos(phi),pout*sin(theta)*sin(phi),pout*cos(theta));
+  dau2.SetP(-pout*sin(theta)*cos(phi),-pout*sin(theta)*sin(phi),-pout*cos(theta));
+
+  double energy = sqrt(px*px + py*py + pz*pz + massMot*massMot);
+
+  double bx = px/energy;
+  double by = py/energy;
+  double bz = pz/energy;
+
+  dau1.Boost(bx,by,bz);
+  dau2.Boost(bx,by,bz);
+
+  return 0;
+}
+
+int particle::Decay3body(particle &dau1,particle &dau2,particle &dau3) const {
+  if(GetMass() == 0.0){
+    printf("Decayment cannot be preformed if mass is zero\n");
+    return 1;
+  }
+  
+  double massMot = GetMass();
+  double massDau1 = dau1.GetMass();
+  double massDau2 = dau2.GetMass();
+  double massDau3 = dau3.GetMass();
+
+  double massLimit2 = (massMot-massDau2)*(massMot-massDau2);
+
+  double invnum = 1./RAND_MAX;
+
+  if(fIparticle > -1 && fParticleType[fIparticle]->IsResonance()){ // add width effect
+    // gaussian random numbers
+    float x1, x2, w, y1;//, y2;
+    do {
+      x1 = 2.0 * rand()*invnum - 1.0;
+      x2 = 2.0 * rand()*invnum - 1.0;
+      w = x1 * x1 + x2 * x2;
+    } while ( w >= 1.0 );
+    
+    w = sqrt( (-2.0 * log( w ) ) / w );
+    y1 = x1 * w;
+    // y2 = x2 * w;
+
+    massMot += ((resonanceType *) fParticleType[fIparticle])->GetWidth() * y1;
+
+  }
+
+  if(massMot < massDau1 + massDau2 + massDau3){
+    printf("Decayment cannot be preformed because mass is too low in this channel\n");
+    return 2;
+  }
+
+  double xran = rand()*invnum;
+  double mass13 = -1;
+  int counter = 0;
+  while(mass13*mass13/massLimit2 > xran){ // to assure a dalitz homogenous plot
+    xran = rand()*invnum;
+    double mass12 = (massDau1 + massDau2)*(massDau1 + massDau2);
+    mass12 += ((massMot-massDau3)*(massMot-massDau3) - mass12) * xran;
+    mass12 = sqrt(mass12);
+    
+    // perform decay mass3 and mass12 and then mass12 decay
+    double pout = sqrt((massMot*massMot - (massDau3+mass12)*(massDau3+mass12))*(massMot*massMot - (massDau3-mass12)*(massDau3-mass12)))/massMot*0.5;
+    
+    double norm = 6.283/RAND_MAX;
+    
+    double phi = rand()*norm;
+    double theta = rand()*norm*0.5 - 1.57075;
+    dau3.SetP(pout*sin(theta)*cos(phi),pout*sin(theta)*sin(phi),pout*cos(theta));
+    particle::Decay2body(dau1,dau2,mass12,pout*sin(theta)*cos(phi),pout*sin(theta)*sin(phi),pout*cos(theta));
+    
+    
+    mass13 = dau3.InvMass(dau1);
+    xran = rand()*invnum;
+    counter ++;
+    if(counter > 20) printf("Some problems in performing decay -> counter = %i (m12 =%f, m13=%f)\n",counter,mass12,mass13);
+  }
+
+  double energy = sqrt(fPx*fPx + fPy*fPy + fPz*fPz + massMot*massMot);
+
+  double bx = fPx/energy;
+  double by = fPy/energy;
+  double bz = fPz/energy;
+
+  dau1.Boost(bx,by,bz);
+  dau2.Boost(bx,by,bz);
+  dau3.Boost(bx,by,bz);
+
+  return 0;
+}

@@ -40,6 +40,8 @@ class particle //: public TObject
   double GetEnergy() const;
 
   int Decay2body(particle &dau1,particle &dau2) const;
+  static int Decay2body(particle &dau1,particle &dau2,float mass,float px=0,float py=0,float pz=0);
+  int Decay3body(particle &dau1,particle &dau2,particle &dau3) const;
 
   double InvMass(particle & other)const;
   
