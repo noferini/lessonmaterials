@@ -76,7 +76,7 @@ int main(){
   for(ev=0;ev < 1000;ev++){ // event loop
     
     // pions
-    for(Int_t j=0;j < 50000;j++){
+    for(Int_t j=0;j < 1000;j++){
       part.ChangeParticleType(gRandom->Rndm() > 0.5);
       FillKine(part);
       pt = TMath::Sqrt(part.GetPx()*part.GetPx() + part.GetPy()*part.GetPy());
