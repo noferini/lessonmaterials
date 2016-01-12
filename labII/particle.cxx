@@ -252,6 +252,13 @@ double particle::InvMass(particle & other) const{
   return sqrt(energy*energy - p2);
 
 }
+double particle::InvMass(particle & other,particle & other2) const{
+  double energy = GetEnergy() + other.GetEnergy()+ other2.GetEnergy();
+  double p2 = (fPx+other.GetPx()+other2.GetPx())*(fPx+other.GetPx()+other2.GetPx()) + (fPy+other.GetPy()+other2.GetPy())*(fPy+other.GetPy()+other2.GetPy()) + (fPz+other.GetPz()+other2.GetPz())*(fPz+other.GetPz()+other2.GetPz());
+  
+  return sqrt(energy*energy - p2);
+
+}
 
 int particle::Decay2body(particle &dau1,particle &dau2,float mass,float px,float py,float pz) {
   if(mass == 0.0){
@@ -300,7 +307,7 @@ int particle::Decay3body(particle &dau1,particle &dau2,particle &dau3) const {
   double massDau2 = dau2.GetMass();
   double massDau3 = dau3.GetMass();
 
-  double massLimit2 = (massMot-massDau2)*(massMot-massDau2);
+  double massLimit2 = (massMot-massDau3)*(massMot-massDau3);
 
   double invnum = 1./RAND_MAX;
 
@@ -327,14 +334,20 @@ int particle::Decay3body(particle &dau1,particle &dau2,particle &dau3) const {
   }
 
   double xran = rand()*invnum;
-  double mass13 = -1;
+  double mass13 = 0;
+  double mass12 = 0;
+  double mass23 = 0;
   int counter = 0;
-  while(mass13*mass13/massLimit2 > xran){ // to assure a dalitz homogenous plot
+  while(mass12 < 0.001){//mass12*mass12/massLimit2 < xran){ // to assure a dalitz homogenous plot
     xran = rand()*invnum;
-    double mass12 = (massDau1 + massDau2)*(massDau1 + massDau2);
+    mass12 = (massDau1 + massDau2)*(massDau1 + massDau2);
     mass12 += ((massMot-massDau3)*(massMot-massDau3) - mass12) * xran;
     mass12 = sqrt(mass12);
-    
+    xran = rand()*invnum;
+    double mass13ch = (massDau1 + massDau3)*(massDau1 + massDau2);
+    mass13ch += ((massMot-massDau2)*(massMot-massDau2) - mass13) * xran;
+    mass13ch = sqrt(mass13ch);
+
     // perform decay mass3 and mass12 and then mass12 decay
     double pout = sqrt((massMot*massMot - (massDau3+mass12)*(massDau3+mass12))*(massMot*massMot - (massDau3-mass12)*(massDau3-mass12)))/massMot*0.5;
     
@@ -343,13 +356,15 @@ int particle::Decay3body(particle &dau1,particle &dau2,particle &dau3) const {
     double phi = rand()*norm;
     double theta = rand()*norm*0.5 - 1.57075;
     dau3.SetP(pout*sin(theta)*cos(phi),pout*sin(theta)*sin(phi),pout*cos(theta));
-    particle::Decay2body(dau1,dau2,mass12,pout*sin(theta)*cos(phi),pout*sin(theta)*sin(phi),pout*cos(theta));
-    
-    
+    particle::Decay2body(dau1,dau2,mass12,-pout*sin(theta)*cos(phi),-pout*sin(theta)*sin(phi),-pout*cos(theta));
     mass13 = dau3.InvMass(dau1);
+
+    mass23 = dau3.InvMass(dau2);
+
     xran = rand()*invnum;
     counter ++;
-    if(counter > 20) printf("Some problems in performing decay -> counter = %i (m12 =%f, m13=%f)\n",counter,mass12,mass13);
+    if(counter > 20) 
+      printf("Some problems in performing decay -> counter = %i (m12 =%f, m13=%f)\n",counter,mass12,mass13);
   }
 
   double energy = sqrt(fPx*fPx + fPy*fPy + fPz*fPz + massMot*massMot);

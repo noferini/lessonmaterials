@@ -44,6 +44,7 @@ class particle //: public TObject
   int Decay3body(particle &dau1,particle &dau2,particle &dau3) const;
 
   double InvMass(particle & other)const;
+  double InvMass(particle & other,particle & other2)const;
   
   void SetP(double px,double py,double pz){fPx=px,fPy=py,fPz=pz;};
   
