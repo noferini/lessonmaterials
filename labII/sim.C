@@ -73,8 +73,9 @@ int main(){
 
   particle part;
 
-  for(ev=0;ev < 1000;ev++){ // event loop
-    
+  for(ev=0;ev < 100000;ev++){ // event loop
+    //    t->Reset();
+
     // pions
     for(Int_t j=0;j < 1000;j++){
       part.ChangeParticleType(gRandom->Rndm() > 0.5);
