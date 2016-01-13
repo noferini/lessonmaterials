@@ -141,9 +141,9 @@ analyze(Int_t step=1){
 	newpriorsPt[3]->Fill(pt,prob[0]);
 	newpriorsPt[4]->Fill(pt,prob[1]);
 	newpriorsPt[5]->Fill(pt,prob[2]);
-	if(id==1) truePt[0]->Fill(pt);
-	else if(id==3) truePt[1]->Fill(pt);
-	else if(id==5) truePt[2]->Fill(pt);
+	if(id==1) truePt[3]->Fill(pt);
+	else if(id==3) truePt[4]->Fill(pt);
+	else if(id==5) truePt[5]->Fill(pt);
 	pneg[npos].ChangeParticleType(id);
 	pneg[npos].SetP(pt*cos(phi),pt*sin(phi),pz);
 	nneg++;
