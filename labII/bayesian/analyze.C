@@ -124,7 +124,7 @@ analyze(Int_t step=1){
 	GetProb1(weightsPos[npos],priors,prob);
 	newpriorsPt[0]->Fill(pt,prob[0]);
 	newpriorsPt[1]->Fill(pt,prob[1]);
-	newpriorsPt[2]->Fill(pt,prob[1]);
+	newpriorsPt[2]->Fill(pt,prob[2]);
 	if(id==0) truePt[0]->Fill(pt);
 	else if(id==2) truePt[1]->Fill(pt);
 	else if(id==4) truePt[2]->Fill(pt);
@@ -140,7 +140,7 @@ analyze(Int_t step=1){
 	GetProb1(weightsNeg[nneg],priors,prob);
 	newpriorsPt[3]->Fill(pt,prob[0]);
 	newpriorsPt[4]->Fill(pt,prob[1]);
-	newpriorsPt[5]->Fill(pt,prob[1]);
+	newpriorsPt[5]->Fill(pt,prob[2]);
 	if(id==1) truePt[0]->Fill(pt);
 	else if(id==3) truePt[1]->Fill(pt);
 	else if(id==5) truePt[2]->Fill(pt);
