@@ -14,6 +14,9 @@ Float_t pt,pz,phi;
 Int_t id;
 Float_t sig;
 Float_t sigM;
+Int_t mother;
+Float_t vxy;
+Int_t tof;
 Int_t ev=0;
 
 void FillTree(particle part);
@@ -39,6 +42,9 @@ int main(){
   t->Branch("pz",&pz,"pz/F");
   t->Branch("phi",&phi,"phi/F");
   t->Branch("signal",&sigM,"signal/F");
+  t->Branch("mother",&mother,"mother/I");
+  t->Branch("vxy",&vxy,"vxy/F");
+  t->Branch("tof",&tof,"tof/I");
 
   particle::AddParticleType("pi+",0.139,1);
   particle::AddParticleType("pi-",0.139,-1);
@@ -76,6 +82,10 @@ int main(){
   for(ev=0;ev < 100000;ev++){ // event loop
     //    t->Reset();
 
+    mother = -1;
+    vxy = 0;
+    tof = 1;
+
     // pions
     for(Int_t j=0;j < 1000;j++){
       part.ChangeParticleType(gRandom->Rndm() > 0.5);
@@ -105,6 +115,8 @@ int main(){
 
     // K0s
     for(Int_t j=0;j < 7;j++){
+      mother = -1;
+
       part.ChangeParticleType((gRandom->Rndm() > 0.5)+6);
       FillKine(part);
       pt = TMath::Sqrt(part.GetPx()*part.GetPx() + part.GetPy()*part.GetPy());
@@ -112,6 +124,7 @@ int main(){
       FillTree(part);
       
       if(part.GetParticleType() == 7){
+	mother = 7;
 	part.Decay2body(d1,d5);
 	pt = TMath::Sqrt(d1.GetPx()*d1.GetPx() + d1.GetPy()*d1.GetPy());
 	sig = -fseparation->Eval(pt);
@@ -121,6 +134,7 @@ int main(){
 	FillTree(d5);
       }
       else{
+	mother = 6;
 	part.Decay2body(d4,d2);
 	pt = TMath::Sqrt(d4.GetPx()*d4.GetPx() + d4.GetPy()*d4.GetPy());
 	sig = -fseparation->Eval(pt);
@@ -134,6 +148,7 @@ int main(){
 
     // Phi
     for(Int_t j=0;j < 2;j++){
+      mother = -1;
       part.ChangeParticleType(8);
       FillKine(part);
       pt = TMath::Sqrt(part.GetPx()*part.GetPx() + part.GetPy()*part.GetPy());
@@ -141,6 +156,7 @@ int main(){
       FillTree(part);
       Float_t xran = gRandom->Rndm();
       if(xran < 0.492){
+	mother = 8;
 	part.Decay2body(d2,d5);
 	pt = TMath::Sqrt(d2.GetPx()*d2.GetPx() + d2.GetPy()*d2.GetPy());
 	sig = 0;
@@ -153,6 +169,7 @@ int main(){
 
     // Delta
     for(Int_t j=0;j < 1;j++){
+      mother = -1;
       part.ChangeParticleType((gRandom->Rndm() > 0.5)+9);
       FillKine(part);
       pt = TMath::Sqrt(part.GetPx()*part.GetPx() + part.GetPy()*part.GetPy());
@@ -160,6 +177,7 @@ int main(){
       FillTree(part);
 
       if(part.GetParticleType() == 9){
+	mother = 9;
 	part.Decay2body(d1,d3);
 	pt = TMath::Sqrt(d1.GetPx()*d1.GetPx() + d1.GetPy()*d1.GetPy());
 	sig = -fseparation->Eval(pt);
@@ -169,6 +187,7 @@ int main(){
 	FillTree(d3);
       }
       else{
+	mother = 10;
 	part.Decay2body(d4,d6);
 	pt = TMath::Sqrt(d4.GetPx()*d4.GetPx() + d4.GetPy()*d4.GetPy());
 	sig = -fseparation->Eval(pt);
@@ -183,6 +202,8 @@ int main(){
     Int_t n = 0;
     if(gRandom->Rndm() < 0.25) n = 1;
     for(Int_t j=0;j < n;j++){
+      mother = -1;
+
       part.ChangeParticleType((gRandom->Rndm() > 0.5)+11);
       FillKine(part);
       pt = TMath::Sqrt(part.GetPx()*part.GetPx() + part.GetPy()*part.GetPy());
@@ -190,6 +211,8 @@ int main(){
       FillTree(part);
 
       Float_t xvar = gRandom->Rndm();
+
+      mother = part.GetParticleType();
 
       if(part.GetParticleType() == 11){
 	if(xvar < br1){ // no resonant
@@ -214,6 +237,7 @@ int main(){
 	  pt = TMath::Sqrt(res2.GetPx()*res2.GetPx() + res2.GetPy()*res2.GetPy());
 	  sig = -999;
 	  FillTree(res2);
+	  mother = res2.GetParticleType();
 	  pt = TMath::Sqrt(d1.GetPx()*d1.GetPx() + d1.GetPy()*d1.GetPy());
 	  sig = -fseparation->Eval(pt);
 	  FillTree(d1);
@@ -223,7 +247,7 @@ int main(){
 	}
 	else if(xvar < br1+br2+br3){ // Delta++
 	  part.Decay2body(d5,res3);
-	  res2.Decay2body(d1,d3);
+	  res3.Decay2body(d1,d3);
 	  
 	  pt = TMath::Sqrt(d5.GetPx()*d5.GetPx() + d5.GetPy()*d5.GetPy());
 	  sig = 0;
@@ -231,6 +255,7 @@ int main(){
 	  pt = TMath::Sqrt(res3.GetPx()*res3.GetPx() + res3.GetPy()*res3.GetPy());
 	  sig = -999;
 	  FillTree(res3);
+	  mother = res3.GetParticleType();
 	  pt = TMath::Sqrt(d1.GetPx()*d1.GetPx() + d1.GetPy()*d1.GetPy());
 	  sig = -fseparation->Eval(pt);
 	  FillTree(d1);
@@ -254,7 +279,7 @@ int main(){
 	}
 	else if(xvar < br1+br2){ // k0s
 	  part.Decay2body(d6,res1);
-	  res2.Decay2body(d4,d2);
+	  res1.Decay2body(d4,d2);
 	  
 	  pt = TMath::Sqrt(d6.GetPx()*d6.GetPx() + d6.GetPy()*d6.GetPy());
 	  sig = fseparation->Eval(pt);
@@ -262,6 +287,7 @@ int main(){
 	  pt = TMath::Sqrt(res1.GetPx()*res1.GetPx() + res1.GetPy()*res1.GetPy());
 	  sig = -999;
 	  FillTree(res1);
+	  mother = res1.GetParticleType();
 	  pt = TMath::Sqrt(d4.GetPx()*d4.GetPx() + d4.GetPy()*d4.GetPy());
 	  sig = -fseparation->Eval(pt);
 	  FillTree(d4);
@@ -271,7 +297,7 @@ int main(){
 	}
 	else if(xvar < br1+br2+br3){ // Delta--
 	  part.Decay2body(d2,res4);
-	  res2.Decay2body(d4,d6);
+	  res4.Decay2body(d4,d6);
 	  
 	  pt = TMath::Sqrt(d2.GetPx()*d2.GetPx() + d2.GetPy()*d2.GetPy());
 	  sig = 0;
@@ -279,6 +305,7 @@ int main(){
 	  pt = TMath::Sqrt(res4.GetPx()*res4.GetPx() + res4.GetPy()*res4.GetPy());
 	  sig = -999;
 	  FillTree(res4);
+	  mother = res4.GetParticleType();
 	  pt = TMath::Sqrt(d4.GetPx()*d4.GetPx() + d4.GetPy()*d4.GetPy());
 	  sig = -fseparation->Eval(pt);
 	  FillTree(d4);
