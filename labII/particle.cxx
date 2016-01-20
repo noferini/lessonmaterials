@@ -201,21 +201,10 @@ int particle::Decay2body(particle &dau1,particle &dau2) const {
   double massDau2 = dau2.GetMass();
 
   if(fIparticle > -1 && fParticleType[fIparticle]->IsResonance()){ // add width effect
-    // gaussian random numbers
-    float x1, x2, w, y1;//, y2;
-    
     double invnum = 1./RAND_MAX;
-    do {
-      x1 = 2.0 * rand()*invnum - 1.0;
-      x2 = 2.0 * rand()*invnum - 1.0;
-      w = x1 * x1 + x2 * x2;
-    } while ( w >= 1.0 );
-    
-    w = sqrt( (-2.0 * log( w ) ) / w );
-    y1 = x1 * w;
-    // y2 = x2 * w;
+    float_t ran = tan(rand()*invnum*3.14159265358979312)*0.5;
 
-    massMot += ((resonanceType *) fParticleType[fIparticle])->GetWidth() * y1;
+    massMot += ((resonanceType *) fParticleType[fIparticle])->GetWidth() * ran;
 
   }
 
@@ -326,20 +315,10 @@ int particle::Decay3body(particle &dau1,particle &dau2,particle &dau3) const {
   double invnum = 1./RAND_MAX;
 
   if(fIparticle > -1 && fParticleType[fIparticle]->IsResonance()){ // add width effect
-    // gaussian random numbers
-    float x1, x2, w, y1;//, y2;
-    do {
-      x1 = 2.0 * rand()*invnum - 1.0;
-      x2 = 2.0 * rand()*invnum - 1.0;
-      w = x1 * x1 + x2 * x2;
-    } while ( w >= 1.0 );
-    
-    w = sqrt( (-2.0 * log( w ) ) / w );
-    y1 = x1 * w;
-    // y2 = x2 * w;
+    double invnum = 1./RAND_MAX;
+    float_t ran = tan(rand()*invnum*3.14159265358979312)*0.5;
 
-    massMot += ((resonanceType *) fParticleType[fIparticle])->GetWidth() * y1;
-
+    massMot += ((resonanceType *) fParticleType[fIparticle])->GetWidth() * ran;
   }
 
   if(massMot < massDau1 + massDau2 + massDau3){
