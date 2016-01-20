@@ -46,13 +46,13 @@ int main(){
   particle::AddParticleType("K-",0.493,-1);
   particle::AddParticleType("p+",0.938,1);  
   particle::AddParticleType("p-",0.938,-1);
-  particle::AddParticleType("K0*",0.896,0,5.05e-02/2.355);
-  particle::AddParticleType("K0bar*",0.896,0,5.05e-02/2.355);
-  particle::AddParticleType("Phi",1.02,0,0.00426/2.355);
-  particle::AddParticleType("Delta++",1.232,2,0.118/2.355);
-  particle::AddParticleType("Delta--",1.232,-2,0.118/2.355);
-  particle::AddParticleType("Lambdac+",2.28646,1,0.08/2.355);
-  particle::AddParticleType("Lambdacbar+",2.28646,1,0.08/2.355);
+  particle::AddParticleType("K0*",0.896,0,5.05e-02);
+  particle::AddParticleType("K0bar*",0.896,0,5.05e-02);
+  particle::AddParticleType("Phi",1.02,0,0.00426);
+  particle::AddParticleType("Delta++",1.232,2,0.118);
+  particle::AddParticleType("Delta--",1.232,-2,0.118);
+  particle::AddParticleType("Lambdac+",2.28646,1,0.08);
+  particle::AddParticleType("Lambdacbar+",2.28646,1,0.08);
 
 
   particle res1("K0*");
