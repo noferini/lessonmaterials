@@ -179,7 +179,7 @@ void analyze(Int_t step){
 
   TFile *f = new TFile("out.root");
   TTree *t = (TTree *) f->Get("tree");
-  Int_t n = t->GetEntries()/1000;
+  Int_t n = t->GetEntries();
 
   Float_t signal,pt,pz,phi,ptComb,invmass;
   Float_t ptd,pzd,phid;
