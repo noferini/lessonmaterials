@@ -5,7 +5,7 @@
 #include "TTree.h"
 #include "TMath.h"
 #include "TLeaf.h"
-#include "particle.h"
+#include "../particle.h"
 
 TF1 *fseparation;
 void ComputeWeights(Float_t weights[3],Float_t signal,Float_t pt);
@@ -337,17 +337,22 @@ void analyze(Int_t step){
   }
 
   for(Int_t i=0;i<6;i++){
+    if(step == 0){
+      priorsPt[i]->Reset();
+      if(i < 3) priorsPt[i]->Add(allPtPos);
+      else priorsPt[i]->Add(allPtNeg);
+      priorsPt[i]->Scale(1./3);      
+    }
+    
     priorsPt[i]->Add(newpriorsPt[i],-1);
-    priorsPt[i]->Divide(newpriorsPt[i]);
-    if(i<3) priorsPt[i]->Multiply(allPtPos);
-    else priorsPt[i]->Multiply(allPtNeg);
-
 
     for(Int_t j=1;j<=100;j++){
-      // newpriorsPt[i]->SetBinContent(j,newpriorsPt[i]->GetBinContent(j)-priorsPt[i]->GetBinContent(j));
-      newpriorsPt[i]->SetBinError(j,priorsPt[i]->GetBinContent(j));
-    }
+      if(newpriorsPt[i]->GetBinContent(j)-priorsPt[i]->GetBinContent(j)*0.5 > 0)
+	newpriorsPt[i]->SetBinContent(j,newpriorsPt[i]->GetBinContent(j)-priorsPt[i]->GetBinContent(j)*0.5);
+      if(i < 3) newpriorsPt[i]->SetBinError(j,priorsPt[i]->GetBinContent(j)/newpriorsPt[i]->GetBinContent(j)*allPtPos->GetBinContent(j));
+      else       newpriorsPt[i]->SetBinError(j,priorsPt[i]->GetBinContent(j)/newpriorsPt[i]->GetBinContent(j)*allPtNeg->GetBinContent(j));
 
+    }
   }
 
   TFile *fout = new TFile(Form("step%i.root",step+1),"RECREATE");
