@@ -5,7 +5,7 @@
 #include "TTree.h"
 #include "TMath.h"
 #include "TLeaf.h"
-#include "../particle.h"
+#include "../lessonmaterials/labII/particle.h"
 
 TF1 *fseparation;
 void ComputeWeights(Float_t weights[3],Float_t signal,Float_t pt);
@@ -352,6 +352,27 @@ void analyze(Int_t step){
       if(i < 3) newpriorsPt[i]->SetBinError(j,priorsPt[i]->GetBinContent(j)/newpriorsPt[i]->GetBinContent(j)*allPtPos->GetBinContent(j));
       else       newpriorsPt[i]->SetBinError(j,priorsPt[i]->GetBinContent(j)/newpriorsPt[i]->GetBinContent(j)*allPtNeg->GetBinContent(j));
 
+    }
+  }
+
+  // optimization
+  if(step > 0){
+    for(Int_t i=0;i<3;i++){
+      for(Int_t k=0;k<3;k++){
+	for(Int_t j1=1;j1<=100;j1++){
+	  for(Int_t j2=1;j2<=40;j2++){
+
+	    // Ks
+	    if(newpriorsKs[i][k]->GetBinContent(j1,j2)-priorsKs[i][k]->GetBinContent(j1,j2)*0.5 > 0)
+	      newpriorsKs[i][k]->SetBinContent(j1,j2,newpriorsKs[i][k]->GetBinContent(j1,j2)-priorsKs[i][k]->GetBinContent(j1,j2)*0.5);
+	    
+
+	    // Phi
+	    if(newpriorsKs[i][k]->GetBinContent(j1,j2)-priorsKs[i][k]->GetBinContent(j1,j2)*0.5 > 0)
+	      newpriorsKs[i][k]->SetBinContent(j1,j2,newpriorsKs[i][k]->GetBinContent(j1,j2)-priorsKs[i][k]->GetBinContent(j1,j2)*0.5);
+	  }
+	}
+      }
     }
   }
 
