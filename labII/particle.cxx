@@ -15,6 +15,7 @@ particle::particle(){
   fPx = 0;
   fPy = 0;
   fPz = 0;
+  fMother = -1;
 }
 
 particle::particle(const particle& p)//:TObject(p)
@@ -23,13 +24,16 @@ particle::particle(const particle& p)//:TObject(p)
   fPx = p.fPx;
   fPy = p.fPy;
   fPz = p.fPz;
+  fMother = -1;
 }
 
 particle::particle(int iparticle,double px,double py, double pz):
   fPx(px),
   fPy(py),
   fPz(pz)
-{
+{  
+  fMother = -1;
+
   if(iparticle < fNparticleType && iparticle >=0){
     fIparticle = iparticle;
   }
@@ -44,6 +48,8 @@ particle::particle(const char *name,double px,double py, double pz):
   fPy(py),
   fPz(pz)
 {
+  fMother = -1;
+
   int ip=FindParticle(name);
   if(ip != -1){
     fIparticle = ip;
@@ -202,9 +208,18 @@ int particle::Decay2body(particle &dau1,particle &dau2) const {
 
   if(fIparticle > -1 && fParticleType[fIparticle]->IsResonance()){ // add width effect
     double invnum = 1./RAND_MAX;
-    float_t ran = tan(rand()*invnum*3.14159265358979312)*0.5;
 
-    massMot += ((resonanceType *) fParticleType[fIparticle])->GetWidth() * ran;
+    Float_t addmass = -100;
+    Int_t counter = 0;
+    while(massMot + addmass < massDau1 + massDau2){
+        Float_t ran = tan(rand()*invnum*3.14159265358979312)*0.5;
+
+ 	addmass = ran*((resonanceType *) fParticleType[fIparticle])->GetWidth();
+	counter++;
+        if(counter > 100) printf("counter = %i\n",counter);
+    }
+
+    massMot += addmass;
 
   }
 
@@ -331,7 +346,9 @@ int particle::Decay3body(particle &dau1,particle &dau2,particle &dau3) const {
   double mass12 = 0;
   double mass23 = 0;
   int counter = 0;
-  while(mass13*mass13/massLimit2*mass13*mass13/massLimit2*mass13*mass13/massLimit2 < xran){//mass12*mass12/massLimit2 < xran){ // to assure a dalitz homogenous plot
+
+  int status = 2;
+  while(status == 2 || mass13*mass13/massLimit2*mass13*mass13/massLimit2*mass13*mass13/massLimit2 < xran){//mass12*mass12/massLimit2 < xran){ // to assure a dalitz homogenous plot
     xran = rand()*invnum;
     mass12 = (massDau1 + massDau2)*(massDau1 + massDau2);
     mass12 += ((massMot-massDau3)*(massMot-massDau3) - mass12) * xran;
@@ -352,7 +369,8 @@ int particle::Decay3body(particle &dau1,particle &dau2,particle &dau3) const {
     double phi = rand()*norm;
     double theta = rand()*norm*0.5 - 1.57075;
     dau3.SetP(pout*sin(theta)*cos(phi),pout*sin(theta)*sin(phi),pout*cos(theta));
-    particle::Decay2body(dau1,dau2,mass12,-pout*sin(theta)*cos(phi),-pout*sin(theta)*sin(phi),-pout*cos(theta));
+    status = particle::Decay2body(dau1,dau2,mass12,-pout*sin(theta)*cos(phi),-pout*sin(theta)*sin(phi),-pout*cos(theta));
+
     mass13 = dau3.InvMass(dau1);
 
     mass23 = dau3.InvMass(dau2);

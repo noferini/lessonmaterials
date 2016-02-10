@@ -79,7 +79,7 @@ int main(){
 
   particle part;
 
-  for(ev=0;ev < 100000;ev++){ // event loop
+  for(ev=0;ev < 10000;ev++){ // event loop
     //    t->Reset();
 
     mother = -1;
