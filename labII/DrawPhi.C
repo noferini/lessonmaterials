@@ -2,13 +2,13 @@ DrawPhi(Int_t step=1,Float_t ptmin=0,Float_t ptmax=10){
   TFile *fcur = TFile::Open(Form("step%i.root",step));
   TFile *fpre = TFile::Open(Form("step%i.root",step-1));
 
-  TH2D *hcurT = fcur->Get("truePidPhiKaKa");
-  TH2D *hcurP = fcur->Get("priorsPhiKaKa");
+  TH2D *hcurT = (TH2D *) fcur->Get("truePidPhiKaKa");
+  TH2D *hcurP = (TH2D *) fcur->Get("priorsPhiKaKa");
 
-  TH2D *hpreT = fpre->Get("truePidPhiLaKa");
-  TH2D *hpreP = fpre->Get("priorsPhiKaKa");
+  TH2D *hpreT = (TH2D *) fpre->Get("truePidPhiLaKa");
+  TH2D *hpreP = (TH2D *) fpre->Get("priorsPhiKaKa");
 
-  TH2D *hPion = fcur->Get("priorsPhiPiPi");
+  TH2D *hPion = (TH2D *) fcur->Get("priorsPhiPiPi");
 //   hPion->Add((TH2D *) fcur->Get("priorsPhiPiKa"));
 //   hPion->Add((TH2D *) fcur->Get("priorsPhiPiPr"));
 //   hPion->Add((TH2D *) fcur->Get("priorsPhiKaPi"));

@@ -4,13 +4,13 @@ DrawKs(Int_t step=1,Float_t ptmin=0,Float_t ptmax=10){
 
   const char *comb = "PiKa";
 
-  TH2D *hcurT = fcur->Get(Form("truePidKs%s",comb));
-  TH2D *hcurP = fcur->Get(Form("priorsKs%s",comb));
+  TH2D *hcurT = (TH2D *) fcur->Get(Form("truePidKs%s",comb));
+  TH2D *hcurP = (TH2D *) fcur->Get(Form("priorsKs%s",comb));
 
-  TH2D *hpreT = fpre->Get(Form("truePidKs%s",comb));
-  TH2D *hpreP = fpre->Get(Form("priorsKs%s",comb));
+  TH2D *hpreT = (TH2D *) fpre->Get(Form("truePidKs%s",comb));
+  TH2D *hpreP = (TH2D *) fpre->Get(Form("priorsKs%s",comb));
 
-  TH2D *hPion = fcur->Get("priorsKsPiPi");
+  TH2D *hPion = (TH2D *) fcur->Get("priorsKsPiPi");
 //   hPion->Add((TH2D *) fcur->Get("priorsKsPiKa"));
 //   hPion->Add((TH2D *) fcur->Get("priorsKsPiPr"));
 //   hPion->Add((TH2D *) fcur->Get("priorsKsKaKa"));
