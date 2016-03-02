@@ -1,4 +1,4 @@
-DrawPhi(Int_t step=1,Float_t ptmin=0,Float_t ptmax=10){
+void DrawPhi(Int_t step=1,Float_t ptmin=0,Float_t ptmax=10){
   TFile *fcur = TFile::Open(Form("step%i.root",step));
   TFile *fpre = TFile::Open(Form("step%i.root",step-1));
 
