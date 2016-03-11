@@ -35,7 +35,7 @@ void analyze(Int_t step){
 
   // teoretical separation (perfect if equal to the one simualted in sim.C)
   fseparation = new TF1("f","[0]+[1]/x",0,100);
-  fseparation->SetParameter(0,0.1);
+  fseparation->SetParameter(0,0.);
   fseparation->SetParameter(1,7.);
 
   TH1D *priorsPt[6];
