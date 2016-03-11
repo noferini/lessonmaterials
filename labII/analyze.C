@@ -31,12 +31,18 @@ int main(int argc, char* argv[]){
   return 0;
 }
 
+Float_t invwidth;
+
 void analyze(Int_t step){
 
   // teoretical separation (perfect if equal to the one simualted in sim.C)
   fseparation = new TF1("f","[0]+[1]/x",0,100);
   fseparation->SetParameter(0,0.);
   fseparation->SetParameter(1,7.);
+
+  Float_t width = 1.0;
+
+  invwidth = 1./width;
 
   TH1D *priorsPt[6];
   TH1D *newpriorsPt[6];
@@ -447,9 +453,9 @@ void analyze(Int_t step){
 void ComputeWeights(Float_t weights[3],Float_t signal,Float_t pt){
   Float_t expect = fseparation->Eval(pt);
 
-  weights[0] = TMath::Exp(-(signal+expect)*(signal+expect)*0.5);
-  weights[1] = TMath::Exp(-signal*signal*0.5);
-  weights[2] = TMath::Exp(-(signal-expect)*(signal-expect)*0.5);
+  weights[0] = TMath::Exp(-(signal+expect)*(signal+expect)*0.5*invwidth*invwidth);
+  weights[1] = TMath::Exp(-signal*signal*0.5*invwidth*invwidth);
+  weights[2] = TMath::Exp(-(signal-expect)*(signal-expect)*0.5*invwidth*invwidth);
 }
 
 // return the probability array for pion, kaon and proton hypoteses
