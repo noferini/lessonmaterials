@@ -10,7 +10,7 @@
 TF1 *fseparation;
 
 TTree *t;
-Float_t pt,pz,phi;
+Float_t pt,pz,phi,eta;
 Int_t id;
 Float_t sig;
 Float_t sigM;
@@ -20,52 +20,73 @@ Int_t tof;
 Int_t ev=0;
 
 void FillTree(particle part);
-void FillKine(particle &part);
+void FillKine(particle &part,Float_t ptav=1);
 
 int main(){
-  /*
-  gROOT->LoadMacro("particleType.cxx++");
-  gROOT->LoadMacro("resonanceType.cxx++");
-  gROOT->LoadMacro("particle.cxx++");
-  */
+
+  // simulation parameters (tuned on PbPb 10-20% @ 2.76 ATeV)
+  Int_t nevents = 10000;
+  Int_t npion = 455*2*2;
+  Int_t nkaon = 68*2*2;
+  Int_t nproton = 21*2*2;
+  Int_t nk0star = 14*2*2;
+  Int_t nphi = 9*2;
+  Int_t ndelta = 10*2*2; // not measured
+  Float_t nlambdac = 3*2*2; // not measured
+  
+  Float_t ptavPion = 0.5;
+  Float_t ptavKaon = 0.85;
+  Float_t ptavProton = 1.3;
+  Float_t ptavK0star = 1.3;
+  Float_t ptavPhi = 1.34;
+  Float_t ptavDelta = 1.4; // not measured
+  Float_t ptavLambdac = 2.5; // not measured
+
+  // branching ratio for lambda_c
+  Float_t br1 = 0.028; // Lambda_c -> pi K p no resonant
+  Float_t br2 = 0.016; // Lambda_c -> K0* p -> pi K p
+  Float_t br3 = 0.0086; // Lambda_c -> K Delta -> pi K p 
 
   gRandom->SetSeed(0);
 
   fseparation = new TF1("f","[0]+[1]/x",0,100);
-  fseparation->SetParameter(0,0.5);
-  fseparation->SetParameter(1,10);
+  fseparation->SetParameter(0,0.);
+  fseparation->SetParameter(1,7.);
 
   t = new TTree("tree","tree");
-  t->Branch("ev",&ev,"ev/I");
-  t->Branch("id",&id,"id/I");
-  t->Branch("pt",&pt,"pt/F");
-  t->Branch("pz",&pz,"pz/F");
-  t->Branch("phi",&phi,"phi/F");
-  t->Branch("signal",&sigM,"signal/F");
-  t->Branch("mother",&mother,"mother/I");
-  t->Branch("vxy",&vxy,"vxy/F");
-  t->Branch("tof",&tof,"tof/I");
-
-  particle::AddParticleType("pi+",0.139,1);
-  particle::AddParticleType("pi-",0.139,-1);
-  particle::AddParticleType("K+",0.493,1);  
-  particle::AddParticleType("K-",0.493,-1);
-  particle::AddParticleType("p+",0.938,1);  
-  particle::AddParticleType("p-",0.938,-1);
-  particle::AddParticleType("K0*",0.896,0,5.05e-02);
-  particle::AddParticleType("K0bar*",0.896,0,5.05e-02);
-  particle::AddParticleType("Phi",1.02,0,0.00426);
-  particle::AddParticleType("Delta++",1.232,2,0.118);
-  particle::AddParticleType("Delta--",1.232,-2,0.118);
-  particle::AddParticleType("Lambdac+",2.28646,1,0.08);
-  particle::AddParticleType("Lambdacbar+",2.28646,1,0.08);
+  t->Branch("ev",&ev,"ev/I"); // number of event
+  t->Branch("id",&id,"id/I"); // id particle = integer corresponding to the position in the particle type array
+  t->Branch("pt",&pt,"pt/F"); // transverse momentum
+  t->Branch("pz",&pz,"pz/F"); // longitudinal momentum
+  t->Branch("eta",&eta,"eta/F"); // pseudorapidity
+  t->Branch("phi",&phi,"phi/F"); // azhimuthal angle
+  t->Branch("signal",&sigM,"signal/F"); // PID signal defined using fseparation
+  t->Branch("mother",&mother,"mother/I"); // -1=primary, otherwise id particle of the mother
+  // t->Branch("vxy",&vxy,"vxy/F");
+  // t->Branch("tof",&tof,"tof/I");
 
 
+  // define particle types (particle type array)
+  particle::AddParticleType("pi+",0.139,1); // 0
+  particle::AddParticleType("pi-",0.139,-1); // 1
+  particle::AddParticleType("K+",0.493,1); // 2 
+  particle::AddParticleType("K-",0.493,-1); // 3
+  particle::AddParticleType("p+",0.938,1); // 4 
+  particle::AddParticleType("p-",0.938,-1); // 5
+  particle::AddParticleType("K0*",0.896,0,5.05e-02); // 6
+  particle::AddParticleType("K0bar*",0.896,0,5.05e-02); // 7
+  particle::AddParticleType("Phi",1.02,0,0.00426); // 8
+  particle::AddParticleType("Delta++",1.232,2,0.118); // 9 
+  particle::AddParticleType("Delta--",1.232,-2,0.118);  // 10
+  particle::AddParticleType("Lambdac+",2.28646,1,0.08); // 11
+  particle::AddParticleType("Lambdacbar-",2.28646,-1,0.08); // 12
+
+
+  // define same dummy particles useful to perform decays
   particle res1("K0*");
   particle res2("K0bar*");
   particle res3("Delta++");
   particle res4("Delta--");
-
   particle d1("pi+");
   particle d2("K+");
   particle d3("p+");
@@ -73,13 +94,9 @@ int main(){
   particle d5("K-");
   particle d6("p-");
 
-  Float_t br1 = 0.028; // Lambda_c -> pi K p no resonant
-  Float_t br2 = 0.016; // Lambda_c -> K0* p -> pi K p
-  Float_t br3 = 0.0086; // Lambda_c -> K Delta -> pi K p 
-
   particle part;
 
-  for(ev=0;ev < 10000;ev++){ // event loop
+  for(ev=0;ev < nevents;ev++){ // event loop
     //    t->Reset();
 
     mother = -1;
@@ -87,75 +104,78 @@ int main(){
     tof = 1;
 
     // pions
-    for(Int_t j=0;j < 1000;j++){
+    for(Int_t j=0;j < npion;j++){
       part.ChangeParticleType(gRandom->Rndm() > 0.5);
-      FillKine(part);
+      FillKine(part,ptavPion);
       pt = TMath::Sqrt(part.GetPx()*part.GetPx() + part.GetPy()*part.GetPy());
       sig = -fseparation->Eval(pt);
       FillTree(part);
     }
 
     // kaons
-    for(Int_t j=0;j < 100;j++){
+    for(Int_t j=0;j < nkaon;j++){
       part.ChangeParticleType((gRandom->Rndm() > 0.5)+2);
-      FillKine(part);
+      FillKine(part,ptavKaon);
       pt = TMath::Sqrt(part.GetPx()*part.GetPx() + part.GetPy()*part.GetPy());
       sig = 0;
       FillTree(part);
     }
 
     // protons
-    for(Int_t j=0;j < 75;j++){
+    for(Int_t j=0;j < nproton;j++){
       part.ChangeParticleType((gRandom->Rndm() > 0.5)+4);
-      FillKine(part);
+      FillKine(part,ptavProton);
       pt = TMath::Sqrt(part.GetPx()*part.GetPx() + part.GetPy()*part.GetPy());
       sig = fseparation->Eval(pt);
       FillTree(part);
     }
 
-    // K0s
-    for(Int_t j=0;j < 7;j++){
+    // K0*
+    for(Int_t j=0;j < nk0star;j++){
       mother = -1;
 
       part.ChangeParticleType((gRandom->Rndm() > 0.5)+6);
-      FillKine(part);
+      FillKine(part,ptavK0star);
       pt = TMath::Sqrt(part.GetPx()*part.GetPx() + part.GetPy()*part.GetPy());
       sig = -999;
       FillTree(part);
       
       if(part.GetParticleType() == 7){
-	mother = 7;
-	part.Decay2body(d1,d5);
-	pt = TMath::Sqrt(d1.GetPx()*d1.GetPx() + d1.GetPy()*d1.GetPy());
-	sig = -fseparation->Eval(pt);
-	FillTree(d1);
-	pt = TMath::Sqrt(d5.GetPx()*d5.GetPx() + d5.GetPy()*d5.GetPy());
-	sig = 0;
-	FillTree(d5);
+	if(gRandom->Rndm() < 0.5){
+	  mother = 7;
+	  part.Decay2body(d1,d5);
+	  pt = TMath::Sqrt(d1.GetPx()*d1.GetPx() + d1.GetPy()*d1.GetPy());
+	  sig = -fseparation->Eval(pt);
+	  FillTree(d1);
+	  pt = TMath::Sqrt(d5.GetPx()*d5.GetPx() + d5.GetPy()*d5.GetPy());
+	  sig = 0;
+	  FillTree(d5);
+	}
       }
       else{
-	mother = 6;
-	part.Decay2body(d4,d2);
-	pt = TMath::Sqrt(d4.GetPx()*d4.GetPx() + d4.GetPy()*d4.GetPy());
-	sig = -fseparation->Eval(pt);
-	FillTree(d4);
-	pt = TMath::Sqrt(d2.GetPx()*d2.GetPx() + d2.GetPy()*d2.GetPy());
-	sig = 0;
-	FillTree(d2);
+	if(gRandom->Rndm() < 0.5){
+	  mother = 6;
+	  part.Decay2body(d4,d2);
+	  pt = TMath::Sqrt(d4.GetPx()*d4.GetPx() + d4.GetPy()*d4.GetPy());
+	  sig = -fseparation->Eval(pt);
+	  FillTree(d4);
+	  pt = TMath::Sqrt(d2.GetPx()*d2.GetPx() + d2.GetPy()*d2.GetPy());
+	  sig = 0;
+	  FillTree(d2);
+	}
       }
 
     }
 
     // Phi
-    for(Int_t j=0;j < 2;j++){
+    for(Int_t j=0;j < nphi;j++){
       mother = -1;
       part.ChangeParticleType(8);
-      FillKine(part);
+      FillKine(part,ptavPhi);
       pt = TMath::Sqrt(part.GetPx()*part.GetPx() + part.GetPy()*part.GetPy());
       sig = -999;
       FillTree(part);
-      Float_t xran = gRandom->Rndm();
-      if(xran < 0.492){
+      if(gRandom->Rndm() < 0.492){
 	mother = 8;
 	part.Decay2body(d2,d5);
 	pt = TMath::Sqrt(d2.GetPx()*d2.GetPx() + d2.GetPy()*d2.GetPy());
@@ -168,10 +188,10 @@ int main(){
     }
 
     // Delta
-    for(Int_t j=0;j < 1;j++){
+    for(Int_t j=0;j < ndelta;j++){
       mother = -1;
       part.ChangeParticleType((gRandom->Rndm() > 0.5)+9);
-      FillKine(part);
+      FillKine(part,ptavDelta);
       pt = TMath::Sqrt(part.GetPx()*part.GetPx() + part.GetPy()*part.GetPy());
       sig = fseparation->Eval(pt);
       FillTree(part);
@@ -199,13 +219,13 @@ int main(){
     }
 
     // Lambdac
-    Int_t n = 0;
-    if(gRandom->Rndm() < 0.25) n = 1;
-    for(Int_t j=0;j < n;j++){
+    // Int_t n = 0;
+    // if(gRandom->Rndm() < nlambdac) n = 1;
+    for(Int_t j=0;j < nlambdac;j++){
       mother = -1;
 
       part.ChangeParticleType((gRandom->Rndm() > 0.5)+11);
-      FillKine(part);
+      FillKine(part,ptavLambdac);
       pt = TMath::Sqrt(part.GetPx()*part.GetPx() + part.GetPy()*part.GetPy());
       sig = fseparation->Eval(pt);
       FillTree(part);
@@ -227,9 +247,8 @@ int main(){
 	  sig = fseparation->Eval(pt);
 	  FillTree(d3);
 	}
-	else if(xvar < br1+br2){ // k0s
+	else if(xvar < br1+br2){ // k0*
 	  part.Decay2body(d3,res2);
-	  res2.Decay2body(d1,d5);
 	  
 	  pt = TMath::Sqrt(d3.GetPx()*d3.GetPx() + d3.GetPy()*d3.GetPy());
 	  sig = fseparation->Eval(pt);
@@ -237,13 +256,16 @@ int main(){
 	  pt = TMath::Sqrt(res2.GetPx()*res2.GetPx() + res2.GetPy()*res2.GetPy());
 	  sig = -999;
 	  FillTree(res2);
-	  mother = res2.GetParticleType();
-	  pt = TMath::Sqrt(d1.GetPx()*d1.GetPx() + d1.GetPy()*d1.GetPy());
-	  sig = -fseparation->Eval(pt);
-	  FillTree(d1);
-	  pt = TMath::Sqrt(d5.GetPx()*d5.GetPx() + d5.GetPy()*d5.GetPy());
-	  sig = 0;
-	  FillTree(d5);
+	  if(gRandom->Rndm() < 0.5){
+	    res2.Decay2body(d1,d5);
+	    mother = res2.GetParticleType();
+	    pt = TMath::Sqrt(d1.GetPx()*d1.GetPx() + d1.GetPy()*d1.GetPy());
+	    sig = -fseparation->Eval(pt);
+	    FillTree(d1);
+	    pt = TMath::Sqrt(d5.GetPx()*d5.GetPx() + d5.GetPy()*d5.GetPy());
+	    sig = 0;
+	    FillTree(d5);
+	  }
 	}
 	else if(xvar < br1+br2+br3){ // Delta++
 	  part.Decay2body(d5,res3);
@@ -279,7 +301,6 @@ int main(){
 	}
 	else if(xvar < br1+br2){ // k0s
 	  part.Decay2body(d6,res1);
-	  res1.Decay2body(d4,d2);
 	  
 	  pt = TMath::Sqrt(d6.GetPx()*d6.GetPx() + d6.GetPy()*d6.GetPy());
 	  sig = fseparation->Eval(pt);
@@ -287,13 +308,16 @@ int main(){
 	  pt = TMath::Sqrt(res1.GetPx()*res1.GetPx() + res1.GetPy()*res1.GetPy());
 	  sig = -999;
 	  FillTree(res1);
-	  mother = res1.GetParticleType();
-	  pt = TMath::Sqrt(d4.GetPx()*d4.GetPx() + d4.GetPy()*d4.GetPy());
-	  sig = -fseparation->Eval(pt);
-	  FillTree(d4);
-	  pt = TMath::Sqrt(d2.GetPx()*d2.GetPx() + d2.GetPy()*d2.GetPy());
-	  sig = 0;
-	  FillTree(d2);
+	  if(gRandom->Rndm() < 0.5){
+	    res1.Decay2body(d4,d2);
+	    mother = res1.GetParticleType();
+	    pt = TMath::Sqrt(d4.GetPx()*d4.GetPx() + d4.GetPy()*d4.GetPy());
+	    sig = -fseparation->Eval(pt);
+	    FillTree(d4);
+	    pt = TMath::Sqrt(d2.GetPx()*d2.GetPx() + d2.GetPy()*d2.GetPy());
+	    sig = 0;
+	    FillTree(d2);
+	  }
 	}
 	else if(xvar < br1+br2+br3){ // Delta--
 	  part.Decay2body(d2,res4);
@@ -330,13 +354,15 @@ void FillTree(particle part){
   id = part.GetParticleType();
   sigM = gRandom->Gaus(sig,1);
   pz = part.GetPz();
+  Float_t p = TMath::Sqrt(pz*pz + pt*pt);
+  eta = 0.5*TMath::Log((p+pz)/(p-pz));
   phi = TMath::ATan2(part.GetPy(),part.GetPx());
   if(pt > 0.) t->Fill();
 }
 
-void FillKine(particle &part){
+void FillKine(particle &part,Float_t ptav){
   Float_t phit = gRandom->Rndm()*2*TMath::Pi();
-  Float_t pt=-5*TMath::Log(gRandom->Rndm());
+  Float_t pt=-TMath::Log(gRandom->Rndm()) * ptav;
 
   Float_t y = gRandom->Rndm()*2-1;
   Float_t var = TMath::Exp(2*y);
@@ -344,5 +370,7 @@ void FillKine(particle &part){
   var = 1./(var*var - 1);
   Float_t m = part.GetMass();
 
-  part.SetP(pt*cos(phit),pt*sin(phit),var * TMath::Sqrt(m*m + pt*pt));
+  if(y > 0) part.SetP(pt*cos(phit),pt*sin(phit),var * TMath::Sqrt(m*m + pt*pt));
+  else part.SetP(pt*cos(phit),pt*sin(phit),-var * TMath::Sqrt(m*m + pt*pt));
+
 }

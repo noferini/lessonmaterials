@@ -10,8 +10,14 @@
 #include "particle.h"
 
 TF1 *fseparation;
+// return the weight array for pion, kaon and proton hypoteses
+// conditioned probability: a given particles releases the measured signal
 void ComputeWeights(Float_t weights[3],Float_t signal,Float_t pt);
+
+// return the probability array for pion, kaon and proton hypoteses
 void GetProb1(Float_t weights[3],Float_t priors[3],Float_t prob[3]);
+
+// return the probability array for all the pairs 3x3: (pi,pi), (pi,ka), ... , (pr,ka), (pr,pr)
 void GetProb2(Float_t weights1[3],Float_t weights2[3],Float_t priors[3][3],Float_t prob[3][3]);
 void analyze(Int_t step=0);
 
@@ -26,14 +32,11 @@ int main(int argc, char* argv[]){
 }
 
 void analyze(Int_t step){
-  /*
-  gROOT->LoadMacro("../lessonmaterials/labII/particleType.cxx++");
-  gROOT->LoadMacro("../lessonmaterials/labII/resonanceType.cxx++");
-  gROOT->LoadMacro("../lessonmaterials/labII/particle.cxx++");
-  */
+
+  // teoretical separation (perfect if equal to the one simualted in sim.C)
   fseparation = new TF1("f","[0]+[1]/x",0,100);
-  fseparation->SetParameter(0,0.5);
-  fseparation->SetParameter(1,10);
+  fseparation->SetParameter(0,0.1);
+  fseparation->SetParameter(1,7.);
 
   TH1D *priorsPt[6];
   TH1D *newpriorsPt[6];
@@ -42,12 +45,13 @@ void analyze(Int_t step){
   TH1D *allPtNeg = new TH1D("allPtN","All negative;p_{T} (GeV/#it{c});N",100,0,10);
 
   TH2D *priorsKs[3][3];
-  TH2D *priorsPhi[3][3];
   TH2D *newpriorsKs[3][3];
-  TH2D *newpriorsPhi[3][3];
   TH2D *truePidKs[3][3];
-  TH2D *truePidPhi[3][3];
   TH2D *trueKs;
+
+  TH2D *priorsPhi[3][3];
+  TH2D *newpriorsPhi[3][3];
+  TH2D *truePidPhi[3][3];
   TH2D *truePhi;
 
   const char *spec[3] = {"Pi","Ka","Pr"};
@@ -147,19 +151,20 @@ void analyze(Int_t step){
   trueKs =  new TH2D(Form("trueKs"),Form("K^{0}_{s} true;m_{#piK} (GeV/#it{c}^2);p_{T} (GeV/#it{c});N"),100,0.8,1,40,0,10);
   truePhi =  new TH2D(Form("truePhi"),Form("#phi true;m_{KK} (GeV/#it{c}^2);p_{T} (GeV/#it{c});N"),100,0.98,1.05,40,0,10);
   
-  particle::AddParticleType("pi+",0.139,1);
-  particle::AddParticleType("pi-",0.139,-1);
-  particle::AddParticleType("K+",0.493,1);  
-  particle::AddParticleType("K-",0.493,-1);
-  particle::AddParticleType("p+",0.938,1);  
-  particle::AddParticleType("p-",0.938,-1);
-  particle::AddParticleType("K0*",0.896,0,5.05e-02/2.355);
-  particle::AddParticleType("K0bar*",0.896,0,5.05e-02/2.355);
-  particle::AddParticleType("Phi",1.02,0,0.00426/2.355);
-  particle::AddParticleType("Delta++",1.232,2,0.118/2.355);
-  particle::AddParticleType("Delta--",1.232,-2,0.118/2.355);
-  particle::AddParticleType("Lambdac+",2.28646,1,0.08/2.355);
-  particle::AddParticleType("Lambdacbar+",2.28646,-1,0.08/2.355);
+  // define particle types (particle type array)
+  particle::AddParticleType("pi+",0.139,1); // 0
+  particle::AddParticleType("pi-",0.139,-1); // 1
+  particle::AddParticleType("K+",0.493,1); // 2 
+  particle::AddParticleType("K-",0.493,-1); // 3
+  particle::AddParticleType("p+",0.938,1); // 4 
+  particle::AddParticleType("p-",0.938,-1); // 5
+  particle::AddParticleType("K0*",0.896,0,5.05e-02); // 6
+  particle::AddParticleType("K0bar*",0.896,0,5.05e-02); // 7
+  particle::AddParticleType("Phi",1.02,0,0.00426); // 8
+  particle::AddParticleType("Delta++",1.232,2,0.118); // 9 
+  particle::AddParticleType("Delta--",1.232,-2,0.118);  // 10
+  particle::AddParticleType("Lambdac+",2.28646,1,0.08); // 11
+  particle::AddParticleType("Lambdacbar-",2.28646,-1,0.08); // 12
 
   particle d1("pi+");
   particle d2("K+");
@@ -193,18 +198,18 @@ void analyze(Int_t step){
   Int_t cev;
   
   TFile *fout = new TFile(Form("step%i.root",step+1),"RECREATE");
-  TTree *treeKs = new TTree("treeKs","treeKs");
-  Float_t ptPair,massPair,ptD1,ptD2,weightD1[3],weightD2[3],weightFill;
-  Int_t isTrue,isTruePid;
-  treeKs->Branch("ptPair",&ptPair,"ptPair/F");
-  treeKs->Branch("massPair",&massPair,"massPair/F");
-  treeKs->Branch("ptPi",&ptD1,"ptPi/F");
-  treeKs->Branch("ptKa",&ptD2,"ptKa/F");
-  treeKs->Branch("weightPi",weightD1,"wightPi[3]/F");
-  treeKs->Branch("weightKa",weightD2,"wightKa[3]/F");
-  treeKs->Branch("weightFill",&weightFill,"wightFill/F");
-  treeKs->Branch("isTruePid",&isTruePid,"isTruePid/I");
-  treeKs->Branch("isTrue",&isTrue,"isTrue/I");
+  // TTree *treeKs = new TTree("treeKs","treeKs");
+  // Float_t ptPair,massPair,ptD1,ptD2,weightD1[3],weightD2[3],weightFill;
+  // Int_t isTrue,isTruePid;
+  // treeKs->Branch("ptPair",&ptPair,"ptPair/F");
+  // treeKs->Branch("massPair",&massPair,"massPair/F");
+  // treeKs->Branch("ptPi",&ptD1,"ptPi/F");
+  // treeKs->Branch("ptKa",&ptD2,"ptKa/F");
+  // treeKs->Branch("weightPi",weightD1,"wightPi[3]/F");
+  // treeKs->Branch("weightKa",weightD2,"wightKa[3]/F");
+  // treeKs->Branch("weightFill",&weightFill,"wightFill/F");
+  // treeKs->Branch("isTruePid",&isTruePid,"isTruePid/I");
+  // treeKs->Branch("isTrue",&isTrue,"isTrue/I");
 
   for(Int_t i=0;i < n;i++){
     t->GetEvent(i);
@@ -231,7 +236,7 @@ void analyze(Int_t step){
 	  else if(isp2 == 2 || isp2 == 3) isp2 = 1;
 	  else isp2 = 2;
 
-	  // Ks case
+	  // K* case
 	  d1.SetP(ppos[ip].GetPx(),ppos[ip].GetPy(),ppos[ip].GetPz());
 	  d2.SetP(pneg[jn].GetPx(),pneg[jn].GetPy(),pneg[jn].GetPz());
 	  invmass = d1.InvMass(d2);
@@ -248,21 +253,21 @@ void analyze(Int_t step){
 	      for(Int_t jpr=0;jpr<3;jpr++)
 		newpriorsKs[ipr][jpr]->Fill(invmass,ptComb,prob2[ipr][jpr]);
 
-	    ptPair = ptComb;
-	    massPair = invmass;
-	    ptD1 = sqrt(d1.GetPx()*d1.GetPx() + d1.GetPy()*d1.GetPy());
-	    ptD2 = sqrt(d2.GetPx()*d2.GetPx() + d2.GetPy()*d2.GetPy());
-	    for(Int_t ipr=0;ipr<3;ipr++) weightD1[ipr] = weightsPos[ip][ipr];
-	    for(Int_t jpr=0;jpr<3;jpr++) weightD2[jpr] = weightsNeg[jn][jpr];
+	    // ptPair = ptComb;
+	    // massPair = invmass;
+	    // ptD1 = sqrt(d1.GetPx()*d1.GetPx() + d1.GetPy()*d1.GetPy());
+	    // ptD2 = sqrt(d2.GetPx()*d2.GetPx() + d2.GetPy()*d2.GetPy());
+	    // for(Int_t ipr=0;ipr<3;ipr++) weightD1[ipr] = weightsPos[ip][ipr];
+	    // for(Int_t jpr=0;jpr<3;jpr++) weightD2[jpr] = weightsNeg[jn][jpr];
 
-	    weightFill = ptPair / (ptPair*0.5 + 5);
-	    weightFill *= weightFill*weightFill;
-	    weightFill += 0.03;
-	    if(weightFill > 1) weightFill = 1;
-	    isTruePid = (isp1 == 0 && isp2 == 1);
-	    isTrue = (ppos[ip].GetMother() == 6 && pneg[jn].GetMother() == 6);
+	    // weightFill = ptPair / (ptPair*0.5 + 5);
+	    // weightFill *= weightFill*weightFill;
+	    // weightFill += 0.03;
+	    // if(weightFill > 1) weightFill = 1;
+	    // isTruePid = (isp1 == 0 && isp2 == 1);
+	    // isTrue = (ppos[ip].GetMother() == 6 && pneg[jn].GetMother() == 6);
 
-	    if(step==0 && gRandom->Rndm() < weightFill) treeKs->Fill();
+	    // if(step==0 && gRandom->Rndm() < weightFill) treeKs->Fill();
 
 	  }
 
@@ -417,7 +422,7 @@ void analyze(Int_t step){
 //   }
 
   fout->cd();
-  if(step==0) treeKs->Write();
+  //if(step==0) treeKs->Write();
   for(Int_t i=0;i<6;i++){
     newpriorsPt[i]->Write();
     truePt[i]->Write();
@@ -437,6 +442,8 @@ void analyze(Int_t step){
   fout->Close();
 }
 
+// return the weight array for pion, kaon and proton hypoteses
+// conditioned probability: a given particles releases the measured signal
 void ComputeWeights(Float_t weights[3],Float_t signal,Float_t pt){
   Float_t expect = fseparation->Eval(pt);
 
@@ -445,6 +452,7 @@ void ComputeWeights(Float_t weights[3],Float_t signal,Float_t pt){
   weights[2] = TMath::Exp(-(signal-expect)*(signal-expect)*0.5);
 }
 
+// return the probability array for pion, kaon and proton hypoteses
 void GetProb1(Float_t weights[3],Float_t priors[3],Float_t prob[3]){
     prob[0] = weights[0]*priors[0];
     prob[1] = weights[1]*priors[1];
@@ -456,6 +464,7 @@ void GetProb1(Float_t weights[3],Float_t priors[3],Float_t prob[3]){
     prob[2] *= R;
 }
 
+// return the probability array for all the pairs 3x3: (pi,pi), (pi,ka), ... , (pr,ka), (pr,pr)
 void GetProb2(Float_t weights1[3],Float_t weights2[3],Float_t priors[3][3],Float_t prob[3][3]){
   Float_t R= 0;
   for(Int_t i=0;i < 3;i++){
