@@ -32,6 +32,7 @@ int main(int argc, char* argv[]){
 }
 
 Float_t invwidth;
+Float_t addshift;
 
 void analyze(Int_t step){
 
@@ -41,6 +42,7 @@ void analyze(Int_t step){
   fseparation->SetParameter(1,7.);
 
   Float_t width = 1.0;
+  addshift =0;
 
   invwidth = 1./width;
 
@@ -452,6 +454,7 @@ void analyze(Int_t step){
 // conditioned probability: a given particles releases the measured signal
 void ComputeWeights(Float_t weights[3],Float_t signal,Float_t pt){
   Float_t expect = fseparation->Eval(pt);
+  signal -= addshift;
 
   weights[0] = TMath::Exp(-(signal+expect)*(signal+expect)*0.5*invwidth*invwidth);
   weights[1] = TMath::Exp(-signal*signal*0.5*invwidth*invwidth);
