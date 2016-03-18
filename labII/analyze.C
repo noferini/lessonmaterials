@@ -80,7 +80,7 @@ void analyze(Int_t step){
     // Ks and phi priors
     for(Int_t i=0; i< 3;i++){
       for(Int_t j=0; j< 3;j++){
-	priorsKs[i][j] =  new TH2D(Form("oldpriorsKs%s%s",spec[i],spec[j]),Form("K^{0}_{s} priors for %s-%s;m_{#piK} (GeV/#it{c}^2);p_{T} (GeV/#it{c});N",spec[i],spec[j]),100,0.8,1,40,0,10);
+	priorsKs[i][j] =  new TH2D(Form("oldpriorsKs%s%s",spec[i],spec[j]),Form("K^{0}_{s} priors for %s-%s;m_{#piK} (GeV/#it{c}^2);p_{T} (GeV/#it{c});N",spec[i],spec[j]),100,0.6,1.2,40,0,10);
 	priorsPhi[i][j] =  new TH2D(Form("oldpriorsPhi%s%s",spec[i],spec[j]),Form("#phi priors for %s-%s;m_{KK} (GeV/#it{c}^2);p_{T} (GeV/#it{c});N",spec[i],spec[j]),100,0.98,1.05,40,0,10);
 
 
@@ -134,7 +134,7 @@ void analyze(Int_t step){
   // Ks and phi priors distributions
   for(Int_t i=0; i< 3;i++){
     for(Int_t j=0; j< 3;j++){
-      newpriorsKs[i][j] =  new TH2D(Form("priorsKs%s%s",spec[i],spec[j]),Form("K^{0}_{s} priors for %s-%s;m_{#piK} (GeV/#it{c}^2);p_{T} (GeV/#it{c});N",spec[i],spec[j]),100,0.8,1,40,0,10);
+      newpriorsKs[i][j] =  new TH2D(Form("priorsKs%s%s",spec[i],spec[j]),Form("K^{0}_{s} priors for %s-%s;m_{#piK} (GeV/#it{c}^2);p_{T} (GeV/#it{c});N",spec[i],spec[j]),100,0.6,1.2,40,0,10);
       newpriorsPhi[i][j] =  new TH2D(Form("priorsPhi%s%s",spec[i],spec[j]),Form("#phi priors for %s-%s;m_{KK} (GeV/#it{c}^2);p_{T} (GeV/#it{c});N",spec[i],spec[j]),100,0.98,1.05,40,0,10);
     }
   }
@@ -149,12 +149,12 @@ void analyze(Int_t step){
   // Ks and phi truePid distributions
   for(Int_t i=0; i< 3;i++){
     for(Int_t j=0; j< 3;j++){
-      truePidKs[i][j] =  new TH2D(Form("truePidKs%s%s",spec[i],spec[j]),Form("K^{0}_{s} truePid for %s-%s;m_{#piK} (GeV/#it{c}^2);p_{T} (GeV/#it{c});N",spec[i],spec[j]),100,0.8,1,40,0,10);
+      truePidKs[i][j] =  new TH2D(Form("truePidKs%s%s",spec[i],spec[j]),Form("K^{0}_{s} truePid for %s-%s;m_{#piK} (GeV/#it{c}^2);p_{T} (GeV/#it{c});N",spec[i],spec[j]),100,0.6,1.2,40,0,10);
       truePidPhi[i][j] =  new TH2D(Form("truePidPhi%s%s",spec[i],spec[j]),Form("#phi truePid for %s-%s;m_{KK} (GeV/#it{c}^2);p_{T} (GeV/#it{c});N",spec[i],spec[j]),100,0.98,1.05,40,0,10);
     }
   }
 
-  trueKs =  new TH2D(Form("trueKs"),Form("K^{0}_{s} true;m_{#piK} (GeV/#it{c}^2);p_{T} (GeV/#it{c});N"),100,0.8,1,40,0,10);
+  trueKs =  new TH2D(Form("trueKs"),Form("K^{0}_{s} true;m_{#piK} (GeV/#it{c}^2);p_{T} (GeV/#it{c});N"),100,0.6,1.2,40,0,10);
   truePhi =  new TH2D(Form("truePhi"),Form("#phi true;m_{KK} (GeV/#it{c}^2);p_{T} (GeV/#it{c});N"),100,0.98,1.05,40,0,10);
   
   // define particle types (particle type array)
@@ -247,7 +247,7 @@ void analyze(Int_t step){
 	  d2.SetP(pneg[jn].GetPx(),pneg[jn].GetPy(),pneg[jn].GetPz());
 	  invmass = d1.InvMass(d2);
 
-	  if(invmass > 0.8 && invmass < 1 && ptComb < 10){ 
+	  if(invmass > 0.6 && invmass < 1.2 && ptComb < 10){ 
 	    for(Int_t ipr=0;ipr<3;ipr++)
 	      for(Int_t jpr=0;jpr<3;jpr++)
 		priors2[ipr][jpr] = priorsKs[ipr][jpr]->Interpolate(invmass,ptComb);
