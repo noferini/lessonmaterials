@@ -193,7 +193,7 @@ int main(){
       part.ChangeParticleType((gRandom->Rndm() > 0.5)+9);
       FillKine(part,ptavDelta);
       pt = TMath::Sqrt(part.GetPx()*part.GetPx() + part.GetPy()*part.GetPy());
-      sig = fseparation->Eval(pt);
+      sig = -999;
       FillTree(part);
 
       if(part.GetParticleType() == 9){
@@ -227,7 +227,7 @@ int main(){
       part.ChangeParticleType((gRandom->Rndm() > 0.5)+11);
       FillKine(part,ptavLambdac);
       pt = TMath::Sqrt(part.GetPx()*part.GetPx() + part.GetPy()*part.GetPy());
-      sig = fseparation->Eval(pt);
+      sig = -999;
       FillTree(part);
 
       Float_t xvar = gRandom->Rndm();
