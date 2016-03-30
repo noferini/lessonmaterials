@@ -68,6 +68,7 @@ int main(){
   fseparation->SetParameter(0,0.);
   fseparation->SetParameter(1,7.);
 
+  TFile *fout = new TFile("out.root","RECREATE");
   t = new TTree("tree","tree");
   t->Branch("ev",&ev,"ev/I"); // number of event
   t->Branch("id",&id,"id/I"); // id particle = integer corresponding to the position in the particle type array
@@ -358,7 +359,6 @@ int main(){
 
   }
 
-  TFile *fout = new TFile("out.root","RECREATE");
   t->Write();
   fout->Close();
 
