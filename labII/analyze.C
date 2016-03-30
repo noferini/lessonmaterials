@@ -411,7 +411,7 @@ void analyze(Int_t step){
 	
 	Float_t gaineff = gain;
 	
-	if(TMath::Abs(priorsPt[i]->GetBinContent(j))*gain > newpriorsPt[i]->GetBinContent(j)*0.2) gaineff=0.2/newpriorsPt[i]->GetBinContent(j);
+	if(TMath::Abs(priorsPt[i]->GetBinContent(j))*gain > newpriorsPt[i]->GetBinContent(j)*0.2) gaineff=0.2*newpriorsPt[i]->GetBinContent(j)/priorsPt[i]->GetBinContent(j);
 	
 	newpriorsPt[i]->SetBinContent(j,newpriorsPt[i]->GetBinContent(j) - priorsPt[i]->GetBinContent(j)*gaineff);
 	newpriorsPt[i]->SetBinError(j,priorsPt[i]->GetBinContent(j)*(gain+1));
