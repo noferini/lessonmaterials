@@ -400,11 +400,22 @@ void analyze(Int_t step){
     priorsPt[i]->Add(newpriorsPt[i],-1);
 
     for(Int_t j=1;j<=100;j++){
-      if(newpriorsPt[i]->GetBinContent(j)-priorsPt[i]->GetBinContent(j)*0.5 > 0)
-	newpriorsPt[i]->SetBinContent(j,newpriorsPt[i]->GetBinContent(j)-priorsPt[i]->GetBinContent(j)*0.5);
-      if(i < 3) newpriorsPt[i]->SetBinError(j,priorsPt[i]->GetBinContent(j)/newpriorsPt[i]->GetBinContent(j)*allPtPos->GetBinContent(j));
-      else       newpriorsPt[i]->SetBinError(j,priorsPt[i]->GetBinContent(j)/newpriorsPt[i]->GetBinContent(j)*allPtNeg->GetBinContent(j));
+      if(step > 0){
+	Float_t gain = fseparation->Eval(newpriorsPt[i]->GetBinCenter(j));
+	gain = 1-TMath::Exp(-gain*gain*0.25);
+	gain = (1./gain - 1);
 
+	if(newpriorsPt[i]->GetBinContent(j) && i != 0 && i!= 3){ // not for pions
+	  gain *= newpriorsPt[i-1]->GetBinContent(j) / newpriorsPt[i]->GetBinContent(j); // contamination from species before
+	}
+	
+	Float_t gaineff = gain;
+	
+	if(TMath::Abs(priorsPt[i]->GetBinContent(j))*gain > newpriorsPt[i]->GetBinContent(j)*0.2) gaineff=0.2/newpriorsPt[i]->GetBinContent(j);
+	
+	newpriorsPt[i]->SetBinContent(j,newpriorsPt[i]->GetBinContent(j) - priorsPt[i]->GetBinContent(j)*gaineff);
+	newpriorsPt[i]->SetBinError(j,priorsPt[i]->GetBinContent(j)*(gain+1));
+      }
     }
   }
 
