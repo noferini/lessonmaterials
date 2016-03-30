@@ -385,7 +385,7 @@ void FillKine(particle &part,TH1D *h){
   var = 1./(var*var + 1);
   Float_t m = part.GetMass();
 
-  if(y > 0) part.SetP(pt*cos(phit),pt*sin(phit),var * TMath::Sqrt(m*m + pt*pt));
-  else part.SetP(pt*cos(phit),pt*sin(phit),-var * TMath::Sqrt(m*m + pt*pt));
+  if(y > 0) part.SetP(pt*cos(phit),pt*sin(phit),TMath::Sqrt(var*(m*m + pt*pt)));
+  else part.SetP(pt*cos(phit),pt*sin(phit),-TMath::Sqrt(var*(m*m + pt*pt)));
 
 }
