@@ -52,9 +52,9 @@ class particle //: public TObject
   void SetP(double px,double py,double pz){fPx=px,fPy=py,fPz=pz;};
   
   static const int fMaxNumParticleType=50; //reso public per funzionare in root
+  void Boost(double bx, double by, double bz);
  private:
 
-  void Boost(double bx, double by, double bz);
   static int FindParticle(const char *name);
 
   static int fNparticleType;
