@@ -5,6 +5,7 @@
 #include "particleType.h"
 #include "resonanceType.h"
 #include "TF1.h"
+#include "TMath.h"
 
 //ClassImp(particle)
 int particle::fNparticleType = 0;
@@ -233,7 +234,7 @@ int particle::Decay2body(particle &dau1,particle &dau2) const {
   double norm = 6.283/RAND_MAX;
 
   double phi = rand()*norm;
-  double theta = rand()*norm*0.5 - 1.57075;
+  double theta = TMath::ACos(1-2*rand()*norm);//rand()*norm*0.5 - 1.57075;
   dau1.SetP(pout*sin(theta)*cos(phi),pout*sin(theta)*sin(phi),pout*cos(theta));
   dau2.SetP(-pout*sin(theta)*cos(phi),-pout*sin(theta)*sin(phi),-pout*cos(theta));
 
@@ -285,7 +286,8 @@ int particle::Decay2body(particle &dau1,particle &dau2,float mass,float px,float
   double norm = 6.283/RAND_MAX;
 
   double phi = rand()*norm;
-  double theta = rand()*norm*0.5 - 1.57075;
+  double theta = TMath::ACos(1-2*rand()*norm);//rand()*norm*0.5 - 1.57075;
+  //  double theta = rand()*norm*0.5 - 1.57075;
   dau1.SetP(pout*sin(theta)*cos(phi),pout*sin(theta)*sin(phi),pout*cos(theta));
   dau2.SetP(-pout*sin(theta)*cos(phi),-pout*sin(theta)*sin(phi),-pout*cos(theta));
 
@@ -367,7 +369,8 @@ int particle::Decay3body(particle &dau1,particle &dau2,particle &dau3) const {
     double norm = 6.283/RAND_MAX;
     
     double phi = rand()*norm;
-    double theta = rand()*norm*0.5 - 1.57075;
+    double theta = TMath::ACos(1-2*rand()*norm);//rand()*norm*0.5 - 1.57075;
+    //    double theta = rand()*norm*0.5 - 1.57075;
     dau3.SetP(pout*sin(theta)*cos(phi),pout*sin(theta)*sin(phi),pout*cos(theta));
     status = particle::Decay2body(dau1,dau2,mass12,-pout*sin(theta)*cos(phi),-pout*sin(theta)*sin(phi),-pout*cos(theta));
 
