@@ -202,7 +202,7 @@ void analyze(Int_t step){
 
   TFile *f = new TFile("out.root");
   TTree *t = (TTree *) f->Get("tree");
-  Int_t n = t->GetEntries()/100;
+  Int_t n = t->GetEntries();
 
   Float_t signal,pt,pz,phi,ptComb,invmass;
   Float_t ptd,pzd,phid;
@@ -262,25 +262,13 @@ void analyze(Int_t step){
 	  
 	  if(invmass > 0.4 && invmass < 1.35 && ptComb < 10){ 
 
-	    if(invmass < priorsKs[0][0]->GetXaxis()->GetBinCenter(1))
-	      invmass = priorsKs[0][0]->GetXaxis()->GetBinCenter(1);
-	    if(invmass > priorsKs[0][0]->GetXaxis()->GetBinCenter(priorsKs[0][0]->GetNbinsX()))
-	      invmass = priorsKs[0][0]->GetXaxis()->GetBinCenter(priorsKs[0][0]->GetNbinsX());
-
-	    if(ptComb < priorsKs[0][0]->GetYaxis()->GetBinCenter(1))
-	      ptComb = priorsKs[0][0]->GetYaxis()->GetBinCenter(1);
-	    if(ptComb > priorsKs[0][0]->GetYaxis()->GetBinCenter(priorsKs[0][0]->GetNbinsY()))
-	      ptComb = priorsKs[0][0]->GetYaxis()->GetBinCenter(priorsKs[0][0]->GetNbinsY());
-
-	    if(polar < priorsKs[0][0]->GetZaxis()->GetBinCenter(1))
-	      polar = priorsKs[0][0]->GetZaxis()->GetBinCenter(1);
-	   if(polar > priorsKs[0][0]->GetZaxis()->GetBinCenter(priorsKs[0][0]->GetNbinsZ()))
-	      polar = priorsKs[0][0]->GetZaxis()->GetBinCenter(priorsKs[0][0]->GetNbinsZ());
+	    Int_t ibinx = priorsKs[0][0]->GetXaxis()->FindBin(invmass);
+	    Int_t ibiny = priorsKs[0][0]->GetYaxis()->FindBin(ptComb);
+	    Int_t ibinz = priorsKs[0][0]->GetZaxis()->FindBin(polar);
 	    
-
 	    for(Int_t ipr=0;ipr<3;ipr++)
 	      for(Int_t jpr=0;jpr<3;jpr++)
-		priors2[ipr][jpr] = priorsKs[ipr][jpr]->Interpolate(invmass,ptComb,polar);
+		priors2[ipr][jpr] = priorsKs[ipr][jpr]->GetBinContent(ibinx,ibiny,ibinz);
 
 	    truePidKs[isp1][isp2]->Fill(invmass,ptComb,polar);
 
