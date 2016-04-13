@@ -4,7 +4,7 @@ void DrawKs(Int_t step=1,Float_t ptmin=0,Float_t ptmax=10){
 
   const char *comb = "PiKa";
 
-  Int_t rebin=1;
+  Int_t rebin=5;
 
   TH2D *hcurT = (TH2D *) fcur->Get(Form("truePidKs%s",comb));
   TH2D *hcurP = (TH2D *) fcur->Get(Form("priorsKs%s",comb));
@@ -96,7 +96,9 @@ void DrawKs(Int_t step=1,Float_t ptmin=0,Float_t ptmax=10){
   bw->SetParameter(5,0);
 
   TH1D *hr=new TH1D(*hprior);
+  hr->GetYaxis()->SetTitle("(meas - true)/true");
   hr->Add(htrue,-1);
+  hr->Divide(htrue);
   hr->Draw();
   hr->GetYaxis()->UnZoom();
   hr->Fit(bw,"WW","",0.8,1.);
@@ -105,6 +107,6 @@ void DrawKs(Int_t step=1,Float_t ptmin=0,Float_t ptmax=10){
 
   Float_t deltasig = bwsig->Integral(0.8,1) / hr->GetBinWidth(1);
 
-  printf("signal = %f(true) %f(meas) -- delta = %f --> Precision = %f%c\n",truesig,meassig,meassig-truesig,(meassig-truesig)/truesig*100,'%');
+  printf("signal = %f(true) %f(meas) -- delta  = %f (%f) --> Precision = %f(%f)%c\n",truesig,meassig,meassig-truesig,deltasig,(meassig-truesig)/truesig*100,deltasig*100,'%');
 
 }

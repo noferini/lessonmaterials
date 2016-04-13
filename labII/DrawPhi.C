@@ -30,6 +30,7 @@ void DrawPhi(Int_t step=1,Float_t ptmin=0,Float_t ptmax=10){
       err /= hprior->GetBinContent(i);
     }
     hprior->SetBinError(i,err);
+    //htrue->SetBinError(i,0);
 
   }
 
@@ -52,11 +53,17 @@ void DrawPhi(Int_t step=1,Float_t ptmin=0,Float_t ptmax=10){
   hprior->Draw("ERR3");
   htrue->SetLineColor(2);
   htrue->Draw("SAME");
-  htrue->Fit(bw,"","",1,1.05);
+  htrue->Fit(bw,"W","",1,1.05);
 
   for(Int_t i=0;i < 3;i++) bwsig->SetParameter(i,bw->GetParameter(i));
   
   Float_t truesig = bwsig->Integral(1,1.05) / htrue->GetBinWidth(1);
+
+  hprior->Fit(bw,"W","",1,1.05);
+
+  for(Int_t i=0;i < 3;i++) bwsig->SetParameter(i,bw->GetParameter(i));
+  
+  Float_t meassig = bwsig->Integral(1,1.05) / htrue->GetBinWidth(1);
 
   c->cd(2);
   bw->SetParameter(0,100);
@@ -65,15 +72,17 @@ void DrawPhi(Int_t step=1,Float_t ptmin=0,Float_t ptmax=10){
   bw->SetParameter(5,0);
   TH1D *hr=new TH1D(*hprior);
   hr->Add(htrue,-1);
+  hr->GetYaxis()->SetTitle("(meas-true)/true");
+  hr->Divide(htrue);
   hr->Draw();
   hr->GetYaxis()->UnZoom();
   hr->Fit("pol0");
-  hr->Fit(bw,"","",1,1.05);
+  hr->Fit(bw,"W","",1,1.05);
 
   for(Int_t i=0;i < 3;i++) bwsig->SetParameter(i,bw->GetParameter(i));
 
   Float_t deltasig = bwsig->Integral(1,1.05) / hr->GetBinWidth(1);
 
-  printf("signal = %f -- delta = %f --> Precision = %f%c\n",truesig,deltasig,deltasig/truesig*100,'%');
+  printf("signal = %f -- delta = %f (%f) --> Precision = %f(%f)%c\n",truesig,meassig-truesig,deltasig,(meassig-truesig)/truesig,deltasig/truesig*100,'%');
 
 }
