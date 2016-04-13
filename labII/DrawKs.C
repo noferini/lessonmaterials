@@ -4,6 +4,8 @@ void DrawKs(Int_t step=1,Float_t ptmin=0,Float_t ptmax=10){
 
   const char *comb = "PiKa";
 
+  Int_t rebin=1;
+
   TH2D *hcurT = (TH2D *) fcur->Get(Form("truePidKs%s",comb));
   TH2D *hcurP = (TH2D *) fcur->Get(Form("priorsKs%s",comb));
 
@@ -20,6 +22,12 @@ void DrawKs(Int_t step=1,Float_t ptmin=0,Float_t ptmax=10){
 //   hPion->Add((TH2D *) fcur->Get("priorsKsPrPr"));
 //   hPion->Add((TH2D *) fcur->Get("priorsKsPrPi"));
 
+  hcurT->RebinX(rebin);
+  hcurP->RebinX(rebin);
+  hpreT->RebinX(rebin);
+  hpreP->RebinX(rebin);
+  hPion->RebinX(rebin);
+  
 
   TH1D *hprior = hcurP->ProjectionX("meas",hcurP->GetYaxis()->FindBin(ptmin+0.001),hcurP->GetYaxis()->FindBin(ptmax-0.001));
   TH1D *htrue = hcurT->ProjectionX("true",hcurT->GetYaxis()->FindBin(ptmin+0.001),hcurT->GetYaxis()->FindBin(ptmax-0.001));
@@ -27,6 +35,7 @@ void DrawKs(Int_t step=1,Float_t ptmin=0,Float_t ptmax=10){
   TH1D *hpriorOld = hpreP->ProjectionX("measOld",hpreP->GetYaxis()->FindBin(ptmin+0.001),hpreP->GetYaxis()->FindBin(ptmax-0.001));
 
   TH1D *hnorm = hPion->ProjectionX("norm",hPion->GetYaxis()->FindBin(ptmin+0.001),hPion->GetYaxis()->FindBin(ptmax-0.001));
+
 
 
   for(Int_t i=1;i <= hprior->GetNbinsX();i++){
@@ -60,11 +69,18 @@ void DrawKs(Int_t step=1,Float_t ptmin=0,Float_t ptmax=10){
   hprior->SetMinimum(0);
   htrue->SetLineColor(2);
   htrue->Draw("SAME");
-  htrue->Fit(bw);
+  htrue->Fit(bw,"WW","",0.8,1.);
 
   for(Int_t i=0;i < 3;i++) bwsig->SetParameter(i,bw->GetParameter(i));
   
   Float_t truesig = bwsig->Integral(0.8,1) / htrue->GetBinWidth(1);
+
+  hprior->Draw("SAME");
+  hprior->Fit(bw,"WW","",0.8,1.);
+
+  for(Int_t i=0;i < 3;i++) bwsig->SetParameter(i,bw->GetParameter(i));
+  
+  Float_t meassig = bwsig->Integral(0.8,1) / htrue->GetBinWidth(1);
 					       
 						
 //   hpriorOld->SetLineColor(4);
@@ -83,12 +99,12 @@ void DrawKs(Int_t step=1,Float_t ptmin=0,Float_t ptmax=10){
   hr->Add(htrue,-1);
   hr->Draw();
   hr->GetYaxis()->UnZoom();
-  hr->Fit(bw);
+  hr->Fit(bw,"WW","",0.8,1.);
 
   for(Int_t i=0;i < 3;i++) bwsig->SetParameter(i,bw->GetParameter(i));
 
   Float_t deltasig = bwsig->Integral(0.8,1) / hr->GetBinWidth(1);
 
-  printf("signal = %f -- delta = %f --> Precision = %f%c\n",truesig,deltasig,deltasig/truesig*100,'%');
+  printf("signal = %f(true) %f(meas) -- delta = %f --> Precision = %f%c\n",truesig,meassig,meassig-truesig,(meassig-truesig)/truesig*100,'%');
 
 }
