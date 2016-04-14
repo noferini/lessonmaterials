@@ -365,12 +365,13 @@ void analyze(Int_t step){
       pzd = t->GetLeaf("pz")->GetValue();
       phid = t->GetLeaf("phi")->GetValue();
       d1.SetP(ptd*cos(phid),ptd*sin(phid),pzd);
+      mother = t->GetLeaf("mother")->GetValue();
       t->GetEvent(i+2);
       ptd = t->GetLeaf("pt")->GetValue();
       pzd = t->GetLeaf("pz")->GetValue();
       phid = t->GetLeaf("phi")->GetValue();
       d2.SetP(ptd*cos(phid),ptd*sin(phid),pzd);
-      mother = t->GetLeaf("mother")->GetValue();
+      if(mother == 6) mother = t->GetLeaf("mother")->GetValue();
       if(mother == 6) trueKs->Fill(d1.InvMass(d2),pt);
     }
     else if(id == 8){ // is a Phi
@@ -379,12 +380,13 @@ void analyze(Int_t step){
       pzd = t->GetLeaf("pz")->GetValue();
       phid = t->GetLeaf("phi")->GetValue();
       d2.SetP(ptd*cos(phid),ptd*sin(phid),pzd);
+      mother = t->GetLeaf("mother")->GetValue();
       t->GetEvent(i+2);
       ptd = t->GetLeaf("pt")->GetValue();
       pzd = t->GetLeaf("pz")->GetValue();
       phid = t->GetLeaf("phi")->GetValue();
       d5.SetP(ptd*cos(phid),ptd*sin(phid),pzd);
-      mother = t->GetLeaf("mother")->GetValue();
+      if(mother == 8) mother = t->GetLeaf("mother")->GetValue();
       if(mother == 8) truePhi->Fill(d2.InvMass(d5),pt);
     }
   }
