@@ -65,7 +65,7 @@ void analyze(Int_t step){
   TH2D *truePidPhi[3][3];
   TH2D *truePhi;
 
-  Int_t nbinpol=10;
+  Int_t nbinpol=4;
 
   const char *spec[3] = {"Pi","Ka","Pr"};
 
