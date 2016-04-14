@@ -381,16 +381,16 @@ void analyze(Int_t step){
       pzd = t->GetLeaf("pz")->GetValue();
       phid = t->GetLeaf("phi")->GetValue();
       d1.SetP(ptd*cos(phid),ptd*sin(phid),pzd);
+      mother = t->GetLeaf("mother")->GetValue();
       t->GetEvent(i+2);
       ptd = t->GetLeaf("pt")->GetValue();
       pzd = t->GetLeaf("pz")->GetValue();
       phid = t->GetLeaf("phi")->GetValue();
       d2.SetP(ptd*cos(phid),ptd*sin(phid),pzd);
-      mother = t->GetLeaf("mother")->GetValue();
+      if(mother == 6) mother = t->GetLeaf("mother")->GetValue();
       
       polarKs.SetP(d1.GetPx()+d2.GetPx(),d1.GetPy()+d2.GetPy(),d1.GetPz()+d2.GetPz());
       Float_t polar=GetPolariz(polarKs,d2);
-
       if(mother == 6) trueKs->Fill(d1.InvMass(d2),pt,polar);
     }
     else if(id == 8){ // is a Phi
@@ -555,13 +555,17 @@ Float_t GetPolariz(particle moth,particle dau){
   double bz = -moth.GetPz()/moth.GetEnergy();
 
   Float_t momMoth = TMath::Sqrt(moth.GetPx()*moth.GetPx() + moth.GetPy()*moth.GetPy() + moth.GetPz()*moth.GetPz());
-  Float_t momDau = TMath::Sqrt(dau.GetPx()*dau.GetPx() + dau.GetPy()*dau.GetPy() + dau.GetPz()*dau.GetPz());
 
-  if(momMoth == 0 || momDau == 0) return 0;
+  if(momMoth == 0) return 0;
 
   dau.Boost(bx,by,bz);
 
+  Float_t momDau = TMath::Sqrt(dau.GetPx()*dau.GetPx() + dau.GetPy()*dau.GetPy() + dau.GetPz()*dau.GetPz());
+
+  if(momDau == 0) return 0;
+
   Float_t polar = dau.GetPx()*moth.GetPx() + dau.GetPy()*moth.GetPy() + dau.GetPz()*moth.GetPz();
   polar /= momMoth*momDau;
+
   return polar;
 }
