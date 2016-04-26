@@ -11,6 +11,11 @@
 #include "particle.h"
 
 TF1 *fseparation;
+TF1 *fseparationPiKa;
+TF1 *fseparationKaPr;
+
+Bool_t kALICEseparation=kTRUE;
+
 // return the weight array for pion, kaon and proton hypoteses
 // conditioned probability: a given particles releases the measured signal
 void ComputeWeights(Float_t weights[3],Float_t signal,Float_t pt);
@@ -43,6 +48,14 @@ void analyze(Int_t step){
   fseparation = new TF1("f","[0]+[1]/x",0,100);
   fseparation->SetParameter(0,0.);
   fseparation->SetParameter(1,7.);
+ 
+  fseparationPiKa = new TF1("fPiKa","[0]+[1]/TMath::Power(x,2.5)",0,100);
+  fseparationPiKa->SetParameter(0,2.34);
+  fseparationPiKa->SetParameter(1,1);
+
+  fseparationKaPr = new TF1("fKaPr","[0]+[1]/TMath::Power(x,2.5)",0,100);
+  fseparationKaPr->SetParameter(0,1);
+  fseparationKaPr->SetParameter(1,56);
 
   Float_t width = 1.0;
   addshift =0;
@@ -442,6 +455,10 @@ void analyze(Int_t step){
            
       if(step > 1){
 	Float_t gain = fseparation->Eval(newpriorsPt[i]->GetBinCenter(j));
+	
+	if(kALICEseparation)
+	  gain = fseparationPiKa->Eval(newpriorsPt[i]->GetBinCenter(j));
+
 	Float_t gaineff = gain;
 // 	if(gaineff < 1.0) gaineff = 1.0;
 	gain = 1-TMath::Exp(-gain*gain*0.25);
@@ -509,12 +526,19 @@ void analyze(Int_t step){
 // return the weight array for pion, kaon and proton hypoteses
 // conditioned probability: a given particles releases the measured signal
 void ComputeWeights(Float_t weights[3],Float_t signal,Float_t pt){
-  Float_t expect = fseparation->Eval(pt);
+  Float_t expectPi = -fseparation->Eval(pt);
+  Float_t expectPr = fseparation->Eval(pt);
+  
+  if(kALICEseparation){
+    expectPi = -fseparationPiKa->Eval(pt);
+    expectPr = fseparationKaPr->Eval(pt);
+  }
+  
   signal -= addshift;
 
-  weights[0] = TMath::Exp(-(signal+expect)*(signal+expect)*0.5*invwidth*invwidth);
+  weights[0] = TMath::Exp(-(signal-expectPi)*(signal-expectPi)*0.5*invwidth*invwidth);
   weights[1] = TMath::Exp(-signal*signal*0.5*invwidth*invwidth);
-  weights[2] = TMath::Exp(-(signal-expect)*(signal-expect)*0.5*invwidth*invwidth);
+  weights[2] = TMath::Exp(-(signal-expectPr)*(signal-expectPr)*0.5*invwidth*invwidth);
 }
 
 // return the probability array for pion, kaon and proton hypoteses

@@ -8,6 +8,8 @@
 #include "particle.h"
 
 TF1 *fseparation;
+TF1 *fseparationPiKa;
+TF1 *fseparationKaPr;
 
 TTree *t;
 Float_t pt,pz,phi,eta;
@@ -23,6 +25,8 @@ void FillTree(particle part);
 void FillKine(particle &part,TH1D *h);
 
 const char *filein="4050";
+
+Bool_t kALICEseparation=kTRUE;
 
 int main(){
 
@@ -67,6 +71,14 @@ int main(){
   fseparation = new TF1("f","[0]+[1]/x",0,100);
   fseparation->SetParameter(0,0.);
   fseparation->SetParameter(1,7.);
+
+  fseparationPiKa = new TF1("fPiKa","[0]+[1]/TMath::Power(x,2.5)",0,100);
+  fseparationPiKa->SetParameter(0,2.34);
+  fseparationPiKa->SetParameter(1,1);
+
+  fseparationKaPr = new TF1("fKaPr","[0]+[1]/TMath::Power(x,2.5)",0,100);
+  fseparationKaPr->SetParameter(0,1);
+  fseparationKaPr->SetParameter(1,56);
 
   TFile *fout = new TFile("out.root","RECREATE");
   t = new TTree("tree","tree");
@@ -124,7 +136,8 @@ int main(){
       part.ChangeParticleType(gRandom->Rndm() > 0.5);
       FillKine(part,hspectra[0]);
       pt = TMath::Sqrt(part.GetPx()*part.GetPx() + part.GetPy()*part.GetPy());
-      sig = -fseparation->Eval(pt);
+      if(kALICEseparation) sig = -fseparationPiKa->Eval(pt);
+      else sig = -fseparation->Eval(pt);
       FillTree(part);
     }
 
@@ -142,7 +155,8 @@ int main(){
       part.ChangeParticleType((gRandom->Rndm() > 0.5)+4);
       FillKine(part,hspectra[2]);
       pt = TMath::Sqrt(part.GetPx()*part.GetPx() + part.GetPy()*part.GetPy());
-      sig = fseparation->Eval(pt);
+      if(kALICEseparation) sig = fseparationKaPr->Eval(pt);
+      else  sig = fseparation->Eval(pt);
       FillTree(part);
     }
 
@@ -161,7 +175,8 @@ int main(){
 	  mother = 7;
 	  part.Decay2body(d1,d5);
 	  pt = TMath::Sqrt(d1.GetPx()*d1.GetPx() + d1.GetPy()*d1.GetPy());
-	  sig = -fseparation->Eval(pt);
+	  if(kALICEseparation) sig = -fseparationPiKa->Eval(pt);
+	  else sig = -fseparation->Eval(pt);
 	  FillTree(d1);
 	  pt = TMath::Sqrt(d5.GetPx()*d5.GetPx() + d5.GetPy()*d5.GetPy());
 	  sig = 0;
@@ -173,7 +188,8 @@ int main(){
 	  mother = 6;
 	  part.Decay2body(d4,d2);
 	  pt = TMath::Sqrt(d4.GetPx()*d4.GetPx() + d4.GetPy()*d4.GetPy());
-	  sig = -fseparation->Eval(pt);
+	  if(kALICEseparation) sig = -fseparationPiKa->Eval(pt);
+	  else sig = -fseparation->Eval(pt);
 	  FillTree(d4);
 	  pt = TMath::Sqrt(d2.GetPx()*d2.GetPx() + d2.GetPy()*d2.GetPy());
 	  sig = 0;
@@ -216,20 +232,24 @@ int main(){
 	mother = 9;
 	part.Decay2body(d1,d3);
 	pt = TMath::Sqrt(d1.GetPx()*d1.GetPx() + d1.GetPy()*d1.GetPy());
-	sig = -fseparation->Eval(pt);
+	if(kALICEseparation) sig = -fseparationPiKa->Eval(pt);
+	else 	sig = -fseparation->Eval(pt);
 	FillTree(d1);
 	pt = TMath::Sqrt(d3.GetPx()*d3.GetPx() + d3.GetPy()*d3.GetPy());
-	sig = fseparation->Eval(pt);
+	if(kALICEseparation) sig = fseparationKaPr->Eval(pt);
+	else sig = fseparation->Eval(pt);
 	FillTree(d3);
       }
       else{
 	mother = 10;
 	part.Decay2body(d4,d6);
 	pt = TMath::Sqrt(d4.GetPx()*d4.GetPx() + d4.GetPy()*d4.GetPy());
-	sig = -fseparation->Eval(pt);
+	if(kALICEseparation) sig = -fseparationPiKa->Eval(pt);
+	else sig = -fseparation->Eval(pt);
 	FillTree(d4);
 	pt = TMath::Sqrt(d6.GetPx()*d6.GetPx() + d6.GetPy()*d6.GetPy());
-	sig = fseparation->Eval(pt);
+	if(kALICEseparation) sig = fseparationKaPr->Eval(pt);
+	else sig = fseparation->Eval(pt);
 	FillTree(d6);
       }
     }
@@ -254,20 +274,23 @@ int main(){
 	if(xvar < br1){ // no resonant
 	  part.Decay3body(d1,d5,d3);
 	  pt = TMath::Sqrt(d1.GetPx()*d1.GetPx() + d1.GetPy()*d1.GetPy());
-	  sig = -fseparation->Eval(pt);
+	  if(kALICEseparation) sig = -fseparationPiKa->Eval(pt);
+	  else sig = -fseparation->Eval(pt);
 	  FillTree(d1);
 	  pt = TMath::Sqrt(d5.GetPx()*d5.GetPx() + d5.GetPy()*d5.GetPy());
 	  sig = 0;
 	  FillTree(d5);
 	  pt = TMath::Sqrt(d3.GetPx()*d3.GetPx() + d3.GetPy()*d3.GetPy());
-	  sig = fseparation->Eval(pt);
+	  if(kALICEseparation) sig = fseparationKaPr->Eval(pt);
+	  else sig = fseparation->Eval(pt);
 	  FillTree(d3);
 	}
 	else if(xvar < br1+br2){ // k0*
 	  part.Decay2body(d3,res2);
 	  
 	  pt = TMath::Sqrt(d3.GetPx()*d3.GetPx() + d3.GetPy()*d3.GetPy());
-	  sig = fseparation->Eval(pt);
+	  if(kALICEseparation) sig = fseparationKaPr->Eval(pt);
+	  else sig = fseparation->Eval(pt);
 	  FillTree(d3);
 	  pt = TMath::Sqrt(res2.GetPx()*res2.GetPx() + res2.GetPy()*res2.GetPy());
 	  sig = -999;
@@ -276,7 +299,8 @@ int main(){
 	    res2.Decay2body(d1,d5);
 	    mother = res2.GetParticleType();
 	    pt = TMath::Sqrt(d1.GetPx()*d1.GetPx() + d1.GetPy()*d1.GetPy());
-	    sig = -fseparation->Eval(pt);
+	    if(kALICEseparation) sig = -fseparationPiKa->Eval(pt);
+	    else sig = -fseparation->Eval(pt);
 	    FillTree(d1);
 	    pt = TMath::Sqrt(d5.GetPx()*d5.GetPx() + d5.GetPy()*d5.GetPy());
 	    sig = 0;
@@ -295,10 +319,12 @@ int main(){
 	  FillTree(res3);
 	  mother = res3.GetParticleType();
 	  pt = TMath::Sqrt(d1.GetPx()*d1.GetPx() + d1.GetPy()*d1.GetPy());
-	  sig = -fseparation->Eval(pt);
+	  if(kALICEseparation) sig = -fseparationPiKa->Eval(pt);
+	  else sig = -fseparation->Eval(pt);
 	  FillTree(d1);
 	  pt = TMath::Sqrt(d3.GetPx()*d3.GetPx() + d3.GetPy()*d3.GetPy());
-	  sig = fseparation->Eval(pt);
+	  if(kALICEseparation) sig = fseparationKaPr->Eval(pt);
+	  else sig = fseparation->Eval(pt);
 	  FillTree(d3);
 	}
       }
@@ -306,20 +332,23 @@ int main(){
 	if(xvar < br1){ // no resonant
 	  part.Decay3body(d4,d2,d6);
 	  pt = TMath::Sqrt(d4.GetPx()*d4.GetPx() + d4.GetPy()*d4.GetPy());
-	  sig = -fseparation->Eval(pt);
+	  if(kALICEseparation) sig = -fseparationPiKa->Eval(pt);
+	  else sig = -fseparation->Eval(pt);
 	  FillTree(d4);
 	  pt = TMath::Sqrt(d2.GetPx()*d2.GetPx() + d2.GetPy()*d2.GetPy());
 	  sig = 0;
 	  FillTree(d2);
 	  pt = TMath::Sqrt(d6.GetPx()*d6.GetPx() + d6.GetPy()*d6.GetPy());
-	  sig = fseparation->Eval(pt);
+	  if(kALICEseparation) sig = fseparationKaPr->Eval(pt);
+	  else sig = fseparation->Eval(pt);
 	  FillTree(d6);
 	}
 	else if(xvar < br1+br2){ // k0s
 	  part.Decay2body(d6,res1);
 	  
 	  pt = TMath::Sqrt(d6.GetPx()*d6.GetPx() + d6.GetPy()*d6.GetPy());
-	  sig = fseparation->Eval(pt);
+	  if(kALICEseparation) sig = fseparationKaPr->Eval(pt);
+	  else sig = fseparation->Eval(pt);
 	  FillTree(d6);
 	  pt = TMath::Sqrt(res1.GetPx()*res1.GetPx() + res1.GetPy()*res1.GetPy());
 	  sig = -999;
@@ -328,7 +357,8 @@ int main(){
 	    res1.Decay2body(d4,d2);
 	    mother = res1.GetParticleType();
 	    pt = TMath::Sqrt(d4.GetPx()*d4.GetPx() + d4.GetPy()*d4.GetPy());
-	    sig = -fseparation->Eval(pt);
+	    if(kALICEseparation) sig = -fseparationPiKa->Eval(pt);
+	    else sig = -fseparation->Eval(pt);
 	    FillTree(d4);
 	    pt = TMath::Sqrt(d2.GetPx()*d2.GetPx() + d2.GetPy()*d2.GetPy());
 	    sig = 0;
@@ -347,10 +377,12 @@ int main(){
 	  FillTree(res4);
 	  mother = res4.GetParticleType();
 	  pt = TMath::Sqrt(d4.GetPx()*d4.GetPx() + d4.GetPy()*d4.GetPy());
-	  sig = -fseparation->Eval(pt);
+	  if(kALICEseparation) sig = -fseparationPiKa->Eval(pt);
+	  else sig = -fseparation->Eval(pt);
 	  FillTree(d4);
 	  pt = TMath::Sqrt(d6.GetPx()*d6.GetPx() + d6.GetPy()*d6.GetPy());
-	  sig = fseparation->Eval(pt);
+	  if(kALICEseparation) sig = fseparationKaPr->Eval(pt);
+	  else sig = fseparation->Eval(pt);
 	  FillTree(d6);
 	}
       }
