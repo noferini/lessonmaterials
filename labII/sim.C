@@ -13,7 +13,7 @@ TF1 *fseparationKaPr;
 
 TTree *t;
 Float_t pt,pz,phi,eta;
-Int_t id;
+Int_t id,reco;
 Float_t sig;
 Float_t sigM;
 Int_t mother;
@@ -28,7 +28,17 @@ const char *filein="4050";
 
 Bool_t kALICEseparation=kTRUE;
 
+
+TF1 *fEfficiencyPi;
+TF1 *fEfficiencyKa;
+TF1 *fEfficiencyPr;
+
 int main(){
+
+  fEfficiencyPi = new TF1("fEfficiencyPi","(x > 0.3)*(x-0.3)*(x<1) + (x>1)*0.7",0,10);
+  fEfficiencyKa = new TF1("fEfficiencyPi","(x > 0.3)*(x-0.3)*(x<1) + (x>1)*0.7",0,10);
+  fEfficiencyPr = new TF1("fEfficiencyPi","(x > 0.3)*(x-0.3)*(x<1) + (x>1)*0.7",0,10);
+
 
   // simulation parameters (tuned on PbPb 10-20% @ 2.76 ATeV)
   Int_t nevents = 10000;
@@ -90,6 +100,7 @@ int main(){
   t->Branch("phi",&phi,"phi/F"); // azhimuthal angle
   t->Branch("signal",&sigM,"signal/F"); // PID signal defined using fseparation
   t->Branch("mother",&mother,"mother/I"); // -1=primary, otherwise id particle of the mother
+  t->Branch("reco",&reco,"reco/I"); // -1=primary, otherwise id particle of the mother
   // t->Branch("vxy",&vxy,"vxy/F");
   // t->Branch("tof",&tof,"tof/I");
 
@@ -398,11 +409,24 @@ int main(){
 }
 
 void FillTree(particle part){
+  reco = 0;
   id = part.GetParticleType();
+
+  if(id < 2)
+    reco = gRandom->Rndm() < fEfficiencyPi->Eval(pt);
+  else if(id < 4)
+    reco = gRandom->Rndm() < fEfficiencyKa->Eval(pt);
+  else if(id < 6)
+    reco = gRandom->Rndm() < fEfficiencyPr->Eval(pt);
+
   sigM = gRandom->Gaus(sig,1);
   pz = part.GetPz();
   Float_t p = TMath::Sqrt(pz*pz + pt*pt);
   eta = 0.5*TMath::Log((p+pz)/(p-pz));
+
+
+    if(TMath::Abs(eta) > 0.8) reco = 0;
+
   phi = TMath::ATan2(part.GetPy(),part.GetPx());
   if(pt > 0.) t->Fill();
 }
