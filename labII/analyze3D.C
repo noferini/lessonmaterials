@@ -753,9 +753,9 @@ void ComputeWeights(Float_t weights[3],Float_t signal,Float_t pt){
 
 // return the probability array for pion, kaon and proton hypoteses
 void GetProb1(Float_t weights[3],Float_t priors[3],Float_t prob[3]){
-    prob[0] = weights[0]*priors[0];
-    prob[1] = weights[1]*priors[1];
-    prob[2] = weights[2]*priors[2];
+  prob[0] = weights[0]*(priors[0]+1);
+  prob[1] = weights[1]*(priors[1]+1);
+  prob[2] = weights[2]*(priors[2]+1);
     Float_t R= prob[0]+prob[1]+prob[2];
     R = 1./R;
     prob[0] *= R;
@@ -768,7 +768,7 @@ void GetProb2(Float_t weights1[3],Float_t weights2[3],Float_t priors[3][3],Float
   Float_t R= 0;
   for(Int_t i=0;i < 3;i++){
     for(Int_t j=0;j < 3;j++){
-    prob[i][j] = weights1[i]*weights2[j]*priors[i][j];
+      prob[i][j] = weights1[i]*weights2[j]*(priors[i][j]+1);
     R += prob[i][j];
     }
   }
@@ -786,7 +786,7 @@ void GetProb3(Float_t weights1[3],Float_t weights2[3],Float_t weights3[3],Float_
   for(Int_t i=0;i < 3;i++){
     for(Int_t j=0;j < 3;j++){
       for(Int_t k=0;k < 3;k++){
-	prob[i][j][k] = weights1[i]*weights2[j]*weights3[k]*priors[i][j][k];
+	prob[i][j][k] = weights1[i]*weights2[j]*weights3[k]*(priors[i][j][k]+1);
 	R += prob[i][j][k];
       }
     }
