@@ -1,4 +1,5 @@
 #include "TF1.h"
+#include "TF2.h"
 #include "TFile.h"
 #include "TH1D.h"
 #include "TMath.h"
@@ -11,11 +12,28 @@ TF1 *fseparation;
 TF1 *fseparationPiKa;
 TF1 *fseparationKaPr;
 
+TF2 *fTOFpi;
+TF2 *fTOFka;
+TF2 *fTOFpr;
+TF1 *fTPCpi;
+TF1 *fTPCka;
+TF1 *fTPCpr;
+
+// bethe block parameter
+Float_t fKp1=0.0283086;
+Float_t fKp2=2.63394e+01;
+Float_t fKp3=5.04114e-11;
+Float_t fKp4=2.12543;
+Float_t fKp5=4.88663;
+Double_t BetheBlochAleph(Double_t *x,Double_t *par);
+
 TTree *t;
 Float_t pt,pz,phi,eta;
 Int_t id,reco;
 Float_t sig;
 Float_t sigM;
+Float_t sigTOF;
+Float_t sigTPC;
 Int_t mother;
 Float_t vxy;
 Int_t tof;
@@ -32,16 +50,51 @@ Bool_t kALICEseparation=kTRUE;
 TF1 *fEfficiencyPi;
 TF1 *fEfficiencyKa;
 TF1 *fEfficiencyPr;
+TF1 *fEfficiencyPiTOF;
+TF1 *fEfficiencyKaTOF;
+TF1 *fEfficiencyPrTOF;
 
 int main(){
 
-  fEfficiencyPi = new TF1("fEfficiencyPi","(x > 0.3)*(x-0.3)*(x<1) + (x>1)*0.7",0,10);
-  fEfficiencyKa = new TF1("fEfficiencyPi","(x > 0.3)*(x-0.3)*(x<1) + (x>1)*0.7",0,10);
-  fEfficiencyPr = new TF1("fEfficiencyPi","(x > 0.3)*(x-0.3)*(x<1) + (x>1)*0.7",0,10);
+  fEfficiencyPi = new TF1("fEfficiencyPi","(x > 0.2)*(x-0.2)*(x<0.5)*3 + (x>0.5)*0.9",0,10);
+  fEfficiencyKa = new TF1("fEfficiencyPi","(x > 0.2)*(x-0.2)*(x<0.5)*3 + (x>0.5)*0.9",0,10);
+  fEfficiencyPr = new TF1("fEfficiencyPi","(x > 0.2)*(x-0.2)*(x<0.5)*3 + (x>0.5)*0.9",0,10);
+  fEfficiencyPiTOF = new TF1("fEfficiencyPiTOF","(x > 0.3)*0.7",0,10);
+  fEfficiencyKaTOF = new TF1("fEfficiencyKaTOF","(x > 0.3)*(x-0.3)*(x<1) + (x>1)*0.7",0,10);
+  fEfficiencyPrTOF = new TF1("fEfficiencyPrTOF","(x > 0.3)*(x-0.3)*(x<1) + (x>1)*0.7",0,10);
 
+
+  // x=p, y=pt/p (normalized at the number of sigma assuming 80 ps resolution)
+  fTOFpi = new TF2("fTOFpi","3.7/y*(sqrt(x*x+0.0193210)/x-1)*37.47405725",0.3,10,0.5,1);
+  fTOFka = new TF2("fTOFka","3.7/y*(sqrt(x*x+0.243049)/x-1)*37.47405725",0.3,10,0.5,1);
+  fTOFpr = new TF2("fTOFpr","3.7/y*(sqrt(x*x+0.879844)/x-1)*37.47405725",0.3,10,0.5,1);
+
+
+  // x=p, already normalized in number of sigma (sigma assumed 3.5=7% of the MIP)
+  fTPCpi = new TF1("fTPCpi",BetheBlochAleph,0,10,6);
+  fTPCpi->SetParameter(0,fKp1);
+  fTPCpi->SetParameter(1,fKp2);
+  fTPCpi->SetParameter(2,fKp3);
+  fTPCpi->SetParameter(3,fKp4);
+  fTPCpi->SetParameter(4,fKp5);
+  fTPCpi->SetParameter(5,0.139);
+  fTPCka = new TF1("fTPCka",BetheBlochAleph,0,10,6);
+  fTPCka->SetParameter(0,fKp1);
+  fTPCka->SetParameter(1,fKp2);
+  fTPCka->SetParameter(2,fKp3);
+  fTPCka->SetParameter(3,fKp4);
+  fTPCka->SetParameter(4,fKp5);
+  fTPCka->SetParameter(5,0.493);
+  fTPCpr = new TF1("fTPCpr",BetheBlochAleph,0,10,6);
+  fTPCpr->SetParameter(0,fKp1);
+  fTPCpr->SetParameter(1,fKp2);
+  fTPCpr->SetParameter(2,fKp3);
+  fTPCpr->SetParameter(3,fKp4);
+  fTPCpr->SetParameter(4,fKp5);
+  fTPCpr->SetParameter(5,0.938);
 
   // simulation parameters (tuned on PbPb 10-20% @ 2.76 ATeV)
-  Int_t nevents = 10000;
+  Int_t nevents = 1000;
 
   TH1D *hspectra[7];
   Float_t npartPerY[7] = {0,0,0,0,0,0,0};
@@ -99,6 +152,8 @@ int main(){
   t->Branch("eta",&eta,"eta/F"); // pseudorapidity
   t->Branch("phi",&phi,"phi/F"); // azhimuthal angle
   t->Branch("signal",&sigM,"signal/F"); // PID signal defined using fseparation
+  t->Branch("signalTPC",&sigTPC,"signalTPC/F"); // PID signal defined using fseparation
+  t->Branch("signalTOF",&sigTOF,"signalTOF/F"); // PID signal defined using fseparation
   t->Branch("mother",&mother,"mother/I"); // -1=primary, otherwise id particle of the mother
   t->Branch("reco",&reco,"reco/I"); // -1=primary, otherwise id particle of the mother
   // t->Branch("vxy",&vxy,"vxy/F");
@@ -409,15 +464,23 @@ int main(){
 }
 
 void FillTree(particle part){
+  sigTPC=-999;
+  sigTOF=-999;
   reco = 0;
   id = part.GetParticleType();
 
-  if(id < 2)
+  if(id < 2){
     reco = gRandom->Rndm() < fEfficiencyPi->Eval(pt);
-  else if(id < 4)
+    if(reco) reco += gRandom->Rndm() < fEfficiencyPiTOF->Eval(pt);
+  }
+  else if(id < 4){
     reco = gRandom->Rndm() < fEfficiencyKa->Eval(pt);
-  else if(id < 6)
+    if(reco) reco += gRandom->Rndm() < fEfficiencyKaTOF->Eval(pt);
+  }
+  else if(id < 6){
     reco = gRandom->Rndm() < fEfficiencyPr->Eval(pt);
+    if(reco) reco += gRandom->Rndm() < fEfficiencyPrTOF->Eval(pt);
+  }
 
   sigM = gRandom->Gaus(sig,1);
   pz = part.GetPz();
@@ -425,7 +488,29 @@ void FillTree(particle part){
   eta = 0.5*TMath::Log((p+pz)/(p-pz));
 
 
-    if(TMath::Abs(eta) > 0.8) reco = 0;
+  if(TMath::Abs(eta) > 0.8) reco = 0;
+
+  if(id < 2 && reco){
+    sigTPC = fTPCpi->Eval(p);
+    if(reco==2)
+      sigTOF = fTOFpi->Eval(p,pt/p);
+  }
+  else if(id < 4 && reco){
+    sigTPC = fTPCka->Eval(p);
+    if(reco==2)
+      sigTOF = fTOFka->Eval(p,pt/p);
+  }
+  else if(id < 6 && reco){
+    sigTPC = fTPCpr->Eval(p);
+    if(reco==2)
+      sigTOF = fTOFpr->Eval(p,pt/p);
+  }
+  
+  if(reco){
+    sigTPC += gRandom->Gaus(0,1);
+    if(reco==2)
+      sigTOF += gRandom->Gaus(0,1);
+  }
 
   phi = TMath::ATan2(part.GetPy(),part.GetPx());
   if(pt > 0.) t->Fill();
@@ -444,4 +529,26 @@ void FillKine(particle &part,TH1D *h){
   if(y > 0) part.SetP(pt*cos(phit),pt*sin(phit),TMath::Sqrt(var*(m*m + pt*pt)));
   else part.SetP(pt*cos(phit),pt*sin(phit),-TMath::Sqrt(var*(m*m + pt*pt)));
 
+}
+
+Double_t BetheBlochAleph(Double_t *x,Double_t *par) {
+  //
+  // This is the empirical ALEPH parameterization of the Bethe-Bloch formula.
+  // It is normalized to 1 at the minimum.
+  //
+  // bg - beta*gamma
+  // 
+  // The default values for the kp* parameters are for ALICE TPC.
+  // The returned value is in MIP units
+  //
+
+  Double_t bg = x[0]/par[5];
+  Double_t beta = bg/TMath::Sqrt(1.+ bg*bg);
+
+  Double_t aa = TMath::Power(beta,par[3]);
+  Double_t bb = TMath::Power(1./bg,par[4]);
+
+  bb=TMath::Log(par[2]+bb);
+  
+  return 14.29*(par[1]-aa-bb)*par[0]/aa;
 }

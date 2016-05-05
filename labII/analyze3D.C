@@ -1,4 +1,5 @@
 #include "TF1.h"
+#include "TF2.h"
 #include "TFile.h"
 #include "TH1D.h"
 #include "TH2D.h"
@@ -14,11 +15,27 @@ TF1 *fseparation;
 TF1 *fseparationPiKa;
 TF1 *fseparationKaPr;
 
+TF2 *fTOFpi;
+TF2 *fTOFka;
+TF2 *fTOFpr;
+TF1 *fTPCpi;
+TF1 *fTPCka;
+TF1 *fTPCpr;
+
+// bethe block parameter
+Float_t fKp1=0.0283086;
+Float_t fKp2=2.63394e+01;
+Float_t fKp3=5.04114e-11;
+Float_t fKp4=2.12543;
+Float_t fKp5=4.88663;
+Double_t BetheBlochAleph(Double_t *x,Double_t *par);
+
 Bool_t kALICEseparation=kTRUE;
 
 // return the weight array for pion, kaon and proton hypoteses
 // conditioned probability: a given particles releases the measured signal
 void ComputeWeights(Float_t weights[3],Float_t signal,Float_t pt);
+void ComputeWeightsALICE(Float_t weights[3],Float_t signalTPC,Float_t signalTOF,Float_t pt,Float_t p);
 
 // return the probability array for pion, kaon and proton hypoteses
 void GetProb1(Float_t weights[3],Float_t priors[3],Float_t prob[3]);
@@ -45,7 +62,16 @@ int main(int argc, char* argv[]){
 Float_t invwidth;
 Float_t addshift;
 
+TF1 *fEfficiencyPiTOF;
+TF1 *fEfficiencyKaTOF;
+TF1 *fEfficiencyPrTOF;
+
 void analyze(Int_t step){
+
+  // TOF propagation factors (TOF efficiencies)
+  fEfficiencyPiTOF = new TF1("fEfficiencyPiTOF","(x > 0.3)*0.7",0,10);
+  fEfficiencyKaTOF = new TF1("fEfficiencyKaTOF","(x > 0.3)*(x-0.3)*(x<1) + (x>1)*0.7",0,10);
+  fEfficiencyPrTOF = new TF1("fEfficiencyPrTOF","(x > 0.3)*(x-0.3)*(x<1) + (x>1)*0.7",0,10);
 
   // teoretical separation (perfect if equal to the one simualted in sim.C)
   fseparation = new TF1("f","[0]+[1]/x",0,100);
@@ -59,6 +85,35 @@ void analyze(Int_t step){
   fseparationKaPr = new TF1("fKaPr","[0]+[1]/TMath::Power(x,2.5)",0,100);
   fseparationKaPr->SetParameter(0,1);
   fseparationKaPr->SetParameter(1,56);
+
+  // x=p, y=pt/p (normalized at the number of sigma assuming 80 ps resolution)
+  fTOFpi = new TF2("fTOFpi","3.7/y*(sqrt(x*x+0.0193210)/x-1)*37.47405725",0.3,10,0.5,1);
+  fTOFka = new TF2("fTOFka","3.7/y*(sqrt(x*x+0.243049)/x-1)*37.47405725",0.3,10,0.5,1);
+  fTOFpr = new TF2("fTOFpr","3.7/y*(sqrt(x*x+0.879844)/x-1)*37.47405725",0.3,10,0.5,1);
+
+
+  // x=p, already normalized in number of sigma (sigma assumed 3.5=7% of the MIP)
+  fTPCpi = new TF1("fTPCpi",BetheBlochAleph,0,10,6);
+  fTPCpi->SetParameter(0,fKp1);
+  fTPCpi->SetParameter(1,fKp2);
+  fTPCpi->SetParameter(2,fKp3);
+  fTPCpi->SetParameter(3,fKp4);
+  fTPCpi->SetParameter(4,fKp5);
+  fTPCpi->SetParameter(5,0.139);
+  fTPCka = new TF1("fTPCka",BetheBlochAleph,0,10,6);
+  fTPCka->SetParameter(0,fKp1);
+  fTPCka->SetParameter(1,fKp2);
+  fTPCka->SetParameter(2,fKp3);
+  fTPCka->SetParameter(3,fKp4);
+  fTPCka->SetParameter(4,fKp5);
+  fTPCka->SetParameter(5,0.493);
+  fTPCpr = new TF1("fTPCpr",BetheBlochAleph,0,10,6);
+  fTPCpr->SetParameter(0,fKp1);
+  fTPCpr->SetParameter(1,fKp2);
+  fTPCpr->SetParameter(2,fKp3);
+  fTPCpr->SetParameter(3,fKp4);
+  fTPCpr->SetParameter(4,fKp5);
+  fTPCpr->SetParameter(5,0.938);
 
   Float_t width = 1.0;
   addshift =0;
@@ -272,7 +327,7 @@ void analyze(Int_t step){
   TTree *t = (TTree *) f->Get("tree");
   Int_t n = t->GetEntries();
 
-  Float_t signal,pt,pz,phi,ptComb,ptComb3prong,invmass;
+  Float_t signal,signalTOF,signalTPC,pt,pz,phi,ptComb,ptComb3prong,invmass;
   Float_t ptd,pzd,phid;
 
   Float_t priors[3],prob[3];
@@ -444,12 +499,15 @@ void analyze(Int_t step){
     }
     else if(id < 6){
       signal = t->GetLeaf("signal")->GetValue();
+      signalTPC = t->GetLeaf("signalTPC")->GetValue();
+      signalTOF = t->GetLeaf("signalTOF")->GetValue();
       pz = t->GetLeaf("pz")->GetValue();
       phi = t->GetLeaf("phi")->GetValue();
       mother = t->GetLeaf("mother")->GetValue();
 
-      if(charge[id] > 0){
-	ComputeWeights(weightsPos[npos],signal,pt);
+      if(charge[id] > 0 && t->GetLeaf("reco")->GetValue()){
+	//ComputeWeights(weightsPos[npos],signal,pt);
+	ComputeWeightsALICE(weightsPos[npos],signalTPC,signalTOF,pt,TMath::Sqrt(pt*pt+pz*pz));
 	priors[0] = priorsPt[0]->Interpolate(pt);
 	priors[1] = priorsPt[1]->Interpolate(pt);
 	priors[2] = priorsPt[2]->Interpolate(pt);
@@ -464,10 +522,11 @@ void analyze(Int_t step){
 	ppos[npos].ChangeParticleType(id);
 	ppos[npos].SetP(pt*cos(phi),pt*sin(phi),pz);
 	ppos[npos].SetMother(mother);
-	if(t->GetLeaf("reco")->GetValue()) npos++;
+	npos++;
       }
-      else{
-	ComputeWeights(weightsNeg[nneg],signal,pt);
+      else if(t->GetLeaf("reco")->GetValue()){
+	//ComputeWeights(weightsNeg[nneg],signal,pt);
+	ComputeWeightsALICE(weightsPos[npos],signalTPC,signalTOF,pt,TMath::Sqrt(pt*pt+pz*pz));
 	priors[0] = priorsPt[3]->Interpolate(pt);
 	priors[1] = priorsPt[4]->Interpolate(pt);
 	priors[2] = priorsPt[5]->Interpolate(pt);
@@ -482,7 +541,7 @@ void analyze(Int_t step){
 	pneg[nneg].ChangeParticleType(id);
 	pneg[nneg].SetP(pt*cos(phi),pt*sin(phi),pz);
 	pneg[nneg].SetMother(mother);
-	if(t->GetLeaf("reco")->GetValue()) nneg++;
+	nneg++;
       }
       // perform the analysis on the single species
     }
@@ -751,6 +810,52 @@ void ComputeWeights(Float_t weights[3],Float_t signal,Float_t pt){
   weights[2] = TMath::Exp(-(signal-expectPr)*(signal-expectPr)*0.5*invwidth*invwidth);
 }
 
+void ComputeWeightsALICE(Float_t weights[3],Float_t signalTPC,Float_t signalTOF,Float_t pt,Float_t p){
+  Float_t expectPiTPC = fTPCpi->Eval(p);
+  Float_t expectKaTPC = fTPCka->Eval(p);
+  Float_t expectPrTPC = fTPCpr->Eval(p);
+  
+  signalTPC -= addshift;
+
+  weights[0] = TMath::Exp(-(signalTPC-expectPiTPC)*(signalTPC-expectPiTPC)*0.5*invwidth*invwidth);
+  weights[1] = TMath::Exp(-(signalTPC-expectKaTPC)*(signalTPC-expectKaTPC)*0.5*invwidth*invwidth);
+  weights[2] = TMath::Exp(-(signalTPC-expectPrTPC)*(signalTPC-expectPrTPC)*0.5*invwidth*invwidth);
+
+
+  Float_t propFactorPi = 1 - fEfficiencyPiTOF->Eval(pt);
+  Float_t propFactorKa = 1 - fEfficiencyKaTOF->Eval(pt);
+  Float_t propFactorPr = 1 - fEfficiencyPrTOF->Eval(pt);
+
+  if(signalTOF > -999){
+    Float_t expectPiTOF = fTOFpi->Eval(p,pt/p);
+    Float_t expectKaTOF = fTOFka->Eval(p,pt/p);
+    Float_t expectPrTOF = fTOFpr->Eval(p,pt/p);
+    
+    signalTOF -= addshift;
+
+    // apply the TOF propagation factor here
+    weights[0] *= TMath::Exp(-(signalTOF-expectPiTOF)*(signalTOF-expectPiTOF)*0.5*invwidth*invwidth);
+    weights[1] *= TMath::Exp(-(signalTOF-expectKaTOF)*(signalTOF-expectKaTOF)*0.5*invwidth*invwidth);
+    weights[2] *= TMath::Exp(-(signalTOF-expectPrTOF)*(signalTOF-expectPrTOF)*0.5*invwidth*invwidth);
+
+    propFactorPi = 1 - propFactorPi;
+    propFactorKa = 1 - propFactorKa;
+    propFactorPr = 1 - propFactorPr;
+  }
+
+  // correct for propagation factor
+  weights[0] *= propFactorPi;
+  weights[1] *= propFactorKa;
+  weights[2] *= propFactorPr;
+
+  // 5 sigma truncation
+  weights[0] += 1E-6;
+  weights[1] += 1E-6;
+  weights[2] += 1E-6;
+
+}
+
+
 // return the probability array for pion, kaon and proton hypoteses
 void GetProb1(Float_t weights[3],Float_t priors[3],Float_t prob[3]){
   prob[0] = weights[0]*(priors[0]+1);
@@ -821,3 +926,26 @@ Float_t GetPolariz(particle moth,particle dau){
 
   return polar;
 }
+
+Double_t BetheBlochAleph(Double_t *x,Double_t *par) {
+  //
+  // This is the empirical ALEPH parameterization of the Bethe-Bloch formula.
+  // It is normalized to 1 at the minimum.
+  //
+  // bg - beta*gamma
+  // 
+  // The default values for the kp* parameters are for ALICE TPC.
+  // The returned value is in MIP units
+  //
+
+  Double_t bg = x[0]/par[5];
+  Double_t beta = bg/TMath::Sqrt(1.+ bg*bg);
+
+  Double_t aa = TMath::Power(beta,par[3]);
+  Double_t bb = TMath::Power(1./bg,par[4]);
+
+  bb=TMath::Log(par[2]+bb);
+  
+  return 14.29*(par[1]-aa-bb)*par[0]/aa;
+}
+
