@@ -137,7 +137,7 @@ int main(){
 
   fseparationPiKa = new TF1("fPiKa","[0]+[1]/TMath::Power(x,2.5)",0,100);
   fseparationPiKa->SetParameter(0,2.34);
-  fseparationPiKa->SetParameter(1,1);
+  fseparationPiKa->SetParameter(1,10);
 
   fseparationKaPr = new TF1("fKaPr","[0]+[1]/TMath::Power(x,2.5)",0,100);
   fseparationKaPr->SetParameter(0,1);
