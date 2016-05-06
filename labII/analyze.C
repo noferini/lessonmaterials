@@ -428,6 +428,8 @@ void analyze(Int_t step){
 // 	gaineff = 1-TMath::Exp(-gaineff*gaineff*0.25);
 // 	gaineff = (1./gaineff - 1);
 
+	gain = 1;
+
  	if(newpriorsPt[i]->GetBinContent(j)){
  	  if(i<3) gain *= allPtPos->GetBinContent(j) / newpriorsPt[i]->GetBinContent(j); // contamination from species before
 	  else gain *= allPtNeg->GetBinContent(j) / newpriorsPt[i]->GetBinContent(j); // contamination from species before
