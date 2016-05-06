@@ -22,6 +22,10 @@ TF1 *fTPCpi;
 TF1 *fTPCka;
 TF1 *fTPCpr;
 
+Float_t ptminPi = 0.5;
+Float_t ptminKa = 0.5;
+Float_t ptminPr = 0.9;
+
 // bethe block parameter
 Float_t fKp1=0.0283086;
 Float_t fKp2=2.63394e+01;
@@ -29,6 +33,8 @@ Float_t fKp3=5.04114e-11;
 Float_t fKp4=2.12543;
 Float_t fKp5=4.88663;
 Double_t BetheBlochAleph(Double_t *x,Double_t *par);
+
+Int_t lambdacGood(Float_t ptLc,Float_t ptPi,Float_t ptKa,Float_t ptPr);
 
 Bool_t kALICEseparation=kTRUE;
 
@@ -61,6 +67,8 @@ int main(int argc, char* argv[]){
 
 Float_t invwidth;
 Float_t addshift;
+Float_t invwidthTOF;
+Float_t addshiftTOF;
 
 TF1 *fEfficiencyPiTOF;
 TF1 *fEfficiencyKaTOF;
@@ -119,6 +127,11 @@ void analyze(Int_t step){
   addshift =0;
 
   invwidth = 1./width;
+
+  Float_t widthTOF = 1.0;
+  addshiftTOF =0;
+
+  invwidthTOF = 1./widthTOF;
 
   TH1D *priorsPt[6];
   TH1D *newpriorsPt[6];
@@ -362,7 +375,9 @@ void analyze(Int_t step){
       iev = cev;
       // start the analysis on the combinatorial
       for(Int_t ip=0;ip < npos;ip++){
+	Float_t ptPi = sqrt(ppos[ip].GetPx()*ppos[ip].GetPx() + ppos[ip].GetPy()*ppos[ip].GetPy());
 	for(Int_t jn=0;jn < nneg;jn++){
+	  Float_t ptKa = sqrt(pneg[jn].GetPx()*pneg[jn].GetPx() + pneg[jn].GetPy()*pneg[jn].GetPy());
 	  ptComb = (ppos[ip].GetPx() + pneg[jn].GetPx())*(ppos[ip].GetPx() + pneg[jn].GetPx());
 	  ptComb += (ppos[ip].GetPy() + pneg[jn].GetPy())*(ppos[ip].GetPy() + pneg[jn].GetPy());
 
@@ -422,6 +437,8 @@ void analyze(Int_t step){
 	  // Lambda_c^+ because reuses the same identities of the anti-K0* case: 1-> pi+, 2-> K-
 	  for(Int_t kp=0;kp < npos;kp++){
 	    if(kp == ip) continue;
+	    Float_t ptPr = sqrt(ppos[kp].GetPx()*ppos[kp].GetPx() + ppos[kp].GetPy()*ppos[kp].GetPy());
+
 	    d3.SetP(ppos[kp].GetPx(),ppos[kp].GetPy(),ppos[kp].GetPz());
 
 	    polarLc.SetP(d1.GetPx()+d2.GetPx()+d3.GetPx(),d1.GetPy()+d2.GetPy()+d3.GetPy(),d1.GetPz()+d2.GetPz()+d3.GetPz());
@@ -433,31 +450,36 @@ void analyze(Int_t step){
 	    ptComb3prong = TMath::Sqrt(ptComb3prong);
 	    invmass -= polarLc.GetPz()*polarLc.GetPz();
 	    invmass = TMath::Sqrt(invmass);
-	    if(invmass > 1 && invmass < 4 && ptComb3prong < 10){ 
-	      Float_t polar=GetPolariz(polarLc,d3);
-	      Int_t ibinx = priorsLc[0][0][0]->GetXaxis()->FindBin(invmass);
-	      Int_t ibiny = priorsLc[0][0][0]->GetYaxis()->FindBin(ptComb);
-	      Int_t ibinz = priorsLc[0][0][0]->GetZaxis()->FindBin(polar);
+	    
+	   
 
-	      for(Int_t ipr=0;ipr<3;ipr++)
-		for(Int_t jpr=0;jpr<3;jpr++)
-		  for(Int_t kpr=0;kpr<3;kpr++)
-		    priors3[ipr][jpr][kpr] = priorsLc[ipr][jpr][kpr]->GetBinContent(ibinx,ibiny,ibinz);
 
-	      Int_t isp3=ppos[kp].GetParticleType();
-	      if(isp3 == 0 || isp3 == 1) isp3 = 0;
-	      else if(isp3 == 2 || isp3 == 3) isp3 = 1;
-	      else isp3 = 2;
-	      truePidLc[isp1][isp2][isp3]->Fill(invmass,ptComb3prong,polar);
+	    if(lambdacGood(TMath::Sqrt(ptComb3prong),ptPi,ptKa,ptPr)){
+	      if(invmass > 1 && invmass < 4 && ptComb3prong < 10){ 
+		Float_t polar=GetPolariz(polarLc,d3);
+		Int_t ibinx = priorsLc[0][0][0]->GetXaxis()->FindBin(invmass);
+		Int_t ibiny = priorsLc[0][0][0]->GetYaxis()->FindBin(ptComb);
+		Int_t ibinz = priorsLc[0][0][0]->GetZaxis()->FindBin(polar);
+		
+		for(Int_t ipr=0;ipr<3;ipr++)
+		  for(Int_t jpr=0;jpr<3;jpr++)
+		    for(Int_t kpr=0;kpr<3;kpr++)
+		      priors3[ipr][jpr][kpr] = priorsLc[ipr][jpr][kpr]->GetBinContent(ibinx,ibiny,ibinz);
+		
+		Int_t isp3=ppos[kp].GetParticleType();
+		if(isp3 == 0 || isp3 == 1) isp3 = 0;
+		else if(isp3 == 2 || isp3 == 3) isp3 = 1;
+		else isp3 = 2;
+		truePidLc[isp1][isp2][isp3]->Fill(invmass,ptComb3prong,polar);
 
-	      GetProb3(weightsPos[ip],weightsNeg[jn],weightsPos[kp],priors3,prob3);
-
-	      for(Int_t ipr=0;ipr<3;ipr++)
-		for(Int_t jpr=0;jpr<3;jpr++)
-		  for(Int_t kpr=0;kpr<3;kpr++){
-		    newpriorsLc[ipr][jpr][kpr]->Fill(invmass,ptComb3prong,polar,prob3[ipr][jpr][kpr]);
-		  }
-
+		GetProb3(weightsPos[ip],weightsNeg[jn],weightsPos[kp],priors3,prob3);
+		
+		for(Int_t ipr=0;ipr<3;ipr++)
+		  for(Int_t jpr=0;jpr<3;jpr++)
+		    for(Int_t kpr=0;kpr<3;kpr++){
+		      newpriorsLc[ipr][jpr][kpr]->Fill(invmass,ptComb3prong,polar,prob3[ipr][jpr][kpr]);
+		    }
+	      }
 	    }
 
 	  }
@@ -526,7 +548,7 @@ void analyze(Int_t step){
       }
       else if(t->GetLeaf("reco")->GetValue()){
 	//ComputeWeights(weightsNeg[nneg],signal,pt);
-	ComputeWeightsALICE(weightsPos[npos],signalTPC,signalTOF,pt,TMath::Sqrt(pt*pt+pz*pz));
+	ComputeWeightsALICE(weightsNeg[nneg],signalTPC,signalTOF,pt,TMath::Sqrt(pt*pt+pz*pz));
 	priors[0] = priorsPt[3]->Interpolate(pt);
 	priors[1] = priorsPt[4]->Interpolate(pt);
 	priors[2] = priorsPt[5]->Interpolate(pt);
@@ -614,6 +636,21 @@ void analyze(Int_t step){
 
       polarLc.SetP(prong1.GetPx()+prong2.GetPx()+prong3.GetPx(),prong1.GetPy()+prong2.GetPy()+prong3.GetPy(),prong1.GetPz()+prong2.GetPz()+prong3.GetPz());
       Float_t polar;
+
+      Float_t ptPi=0,ptKa=0,ptPr=0;
+
+      if(prong1.GetParticleType() == 0) ptPi=sqrt(prong1.GetPx()*prong1.GetPx()+prong1.GetPy()*prong1.GetPy());
+      else if(prong2.GetParticleType() == 0) ptPi=sqrt(prong2.GetPx()*prong2.GetPx()+prong2.GetPy()*prong2.GetPy());
+      else if(prong3.GetParticleType() == 0) ptPi=sqrt(prong3.GetPx()*prong3.GetPx()+prong3.GetPy()*prong3.GetPy());
+
+      if(prong1.GetParticleType() == 3) ptKa=sqrt(prong1.GetPx()*prong1.GetPx()+prong1.GetPy()*prong1.GetPy());
+      else if(prong2.GetParticleType() == 3) ptKa=sqrt(prong2.GetPx()*prong2.GetPx()+prong2.GetPy()*prong2.GetPy());
+      else if(prong3.GetParticleType() == 3) ptKa=sqrt(prong3.GetPx()*prong3.GetPx()+prong3.GetPy()*prong3.GetPy());
+
+      if(prong1.GetParticleType() == 4) ptPr=sqrt(prong1.GetPx()*prong1.GetPx()+prong1.GetPy()*prong1.GetPy());
+      else if(prong2.GetParticleType() == 4) ptPr=sqrt(prong2.GetPx()*prong2.GetPx()+prong2.GetPy()*prong2.GetPy());
+      else if(prong3.GetParticleType() == 4) ptPr=sqrt(prong3.GetPx()*prong3.GetPx()+prong3.GetPy()*prong3.GetPy());
+
       if(prong3.GetParticleType() > 3) polar=GetPolariz(polarLc,prong3);
       else if(prong2.GetParticleType() > 3) polar=GetPolariz(polarLc,prong2);
       else polar=GetPolariz(polarLc,prong1);
@@ -625,7 +662,9 @@ void analyze(Int_t step){
 	invmass -= ptComb3prong;
 	invmass -= polarLc.GetPz()*polarLc.GetPz();
 	invmass = TMath::Sqrt(invmass);
-	trueLc->Fill(invmass,TMath::Sqrt(ptComb3prong),polar);  
+
+	if(lambdacGood(TMath::Sqrt(ptComb3prong),ptPi,ptKa,ptPr))
+	  trueLc->Fill(invmass,TMath::Sqrt(ptComb3prong),polar);  
  	printf("Lambda_c\n");
       }
     }
@@ -831,12 +870,12 @@ void ComputeWeightsALICE(Float_t weights[3],Float_t signalTPC,Float_t signalTOF,
     Float_t expectKaTOF = fTOFka->Eval(p,pt/p);
     Float_t expectPrTOF = fTOFpr->Eval(p,pt/p);
     
-    signalTOF -= addshift;
+    signalTOF -= addshiftTOF;
 
     // apply the TOF propagation factor here
-    weights[0] *= TMath::Exp(-(signalTOF-expectPiTOF)*(signalTOF-expectPiTOF)*0.5*invwidth*invwidth);
-    weights[1] *= TMath::Exp(-(signalTOF-expectKaTOF)*(signalTOF-expectKaTOF)*0.5*invwidth*invwidth);
-    weights[2] *= TMath::Exp(-(signalTOF-expectPrTOF)*(signalTOF-expectPrTOF)*0.5*invwidth*invwidth);
+    weights[0] *= TMath::Exp(-(signalTOF-expectPiTOF)*(signalTOF-expectPiTOF)*0.5*invwidthTOF*invwidthTOF);
+    weights[1] *= TMath::Exp(-(signalTOF-expectKaTOF)*(signalTOF-expectKaTOF)*0.5*invwidthTOF*invwidthTOF);
+    weights[2] *= TMath::Exp(-(signalTOF-expectPrTOF)*(signalTOF-expectPrTOF)*0.5*invwidthTOF*invwidthTOF);
 
     propFactorPi = 1 - propFactorPi;
     propFactorKa = 1 - propFactorKa;
@@ -896,6 +935,7 @@ void GetProb3(Float_t weights1[3],Float_t weights2[3],Float_t weights3[3],Float_
       }
     }
   }
+
   R = 1./R;
    for(Int_t i=0;i < 3;i++){
     for(Int_t j=0;j < 3;j++){
@@ -949,3 +989,12 @@ Double_t BetheBlochAleph(Double_t *x,Double_t *par) {
   return 14.29*(par[1]-aa-bb)*par[0]/aa;
 }
 
+Int_t lambdacGood(Float_t ptLc,Float_t ptPi,Float_t ptKa,Float_t ptPr){
+
+  //  printf("%f %f %f\n",ptPi,ptKa,ptPr);
+  if(ptPi < ptminPi) return 0;
+  if(ptKa < ptminKa) return 0;
+  if(ptPr < ptminPr) return 0;
+
+  return 1;
+}
