@@ -214,11 +214,12 @@ int particle::Decay2body(particle &dau1,particle &dau2) const {
     Float_t addmass = -100;
     Int_t counter = 0;
     while(massMot + addmass < massDau1 + massDau2){
-        Float_t ran = tan(rand()*invnum*3.14159265358979312)*0.5;
-
- 	addmass = ran*((resonanceType *) fParticleType[fIparticle])->GetWidth();
-	counter++;
-        if(counter > 100) printf("counter = %i\n",counter);
+      //Float_t ran = tan(rand()*invnum*3.14159265358979312)*0.5;
+      Float_t ran = gRandom->Gaus(0,1); // Gaussian
+      
+      addmass = ran*((resonanceType *) fParticleType[fIparticle])->GetWidth();
+      counter++;
+      if(counter > 100) printf("counter = %i\n",counter);
     }
 
     massMot += addmass;
@@ -334,7 +335,8 @@ int particle::Decay3body(particle &dau1,particle &dau2,particle &dau3) const {
 
   if(fIparticle > -1 && fParticleType[fIparticle]->IsResonance()){ // add width effect
     double invnum = 1./RAND_MAX;
-    float_t ran = tan(rand()*invnum*3.14159265358979312)*0.5;
+    //    float_t ran = tan(rand()*invnum*3.14159265358979312)*0.5;
+    Float_t ran = gRandom->Gaus(0,1); // Gaussian
 
     massMot += ((resonanceType *) fParticleType[fIparticle])->GetWidth() * ran;
   }
