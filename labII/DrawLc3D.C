@@ -83,7 +83,7 @@ void DrawLc3D(Int_t step=1,Float_t ptmin=0,Float_t ptmax=10){
   hprior->SetMinimum(0);
   htrue->Draw("SAME");
   htrue->SetLineColor(2);
-  htrue->Fit(bw,"EI","",2.15,2.45);
+  htrue->Fit(bw,"","",2.25,2.4);
 
   for(Int_t i=0;i < 3;i++) bwsig->SetParameter(i,bw->GetParameter(i));
   
@@ -91,7 +91,7 @@ void DrawLc3D(Int_t step=1,Float_t ptmin=0,Float_t ptmax=10){
   Float_t backgrd = bw->Integral(2.28646-3*0.008,2.28646+3*0.008) / htrue->GetBinWidth(1);
 
   hprior->Draw("SAME");
-  hprior->Fit(bw,"EI","",2.15,2.45);
+  hprior->Fit(bw,"","",2.25,2.4);
 
   Float_t fiterror = 0;
   if(bw->GetParameter(0)) fiterror = TMath::Abs(bw->GetParError(0)/bw->GetParameter(0));
