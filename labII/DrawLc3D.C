@@ -11,6 +11,7 @@ void DrawLc3D(Int_t step=1,Float_t ptmin=0,Float_t ptmax=10){
   TH3D *hcurT = (TH3D *) fcur->Get(Form("truePidLc%s",comb));
   TH3D *hcurP = (TH3D *) fcur->Get(Form("priorsLc%s",comb));
   TH3D *htrueLc = (TH3D *) fcur->Get(Form("trueLc"));
+  TH3D *hmypidLc = (TH3D *) fcur->Get(Form("mypidLc"));
 
   TH3D *hpreT = (TH3D *) fpre->Get(Form("truePidLc%s",comb));
   TH3D *hpreP = (TH3D *) fpre->Get(Form("priorsLc%s",comb));
@@ -31,13 +32,15 @@ void DrawLc3D(Int_t step=1,Float_t ptmin=0,Float_t ptmax=10){
   hpreP->RebinX(rebin);
   hPion->RebinX(rebin);
   htrueLc->RebinX(rebin);
-  
+  hmypidLc->RebinX(rebin);
 
   TH1D *hprior = hcurP->ProjectionX("meas",hcurP->GetYaxis()->FindBin(ptmin+0.001),hcurP->GetYaxis()->FindBin(ptmax-0.001),0,-1);
 
   TH1D *htrue = hcurT->ProjectionX("true",hcurT->GetYaxis()->FindBin(ptmin+0.001),hcurT->GetYaxis()->FindBin(ptmax-0.001),0,-1);
 
   TH1D *hreal = htrueLc->ProjectionX("real",hcurT->GetYaxis()->FindBin(ptmin+0.001),hcurT->GetYaxis()->FindBin(ptmax-0.001),0,-1);
+
+  TH1D *hmypid = hmypidLc->ProjectionX("mypid",hcurT->GetYaxis()->FindBin(ptmin+0.001),hcurT->GetYaxis()->FindBin(ptmax-0.001),0,-1);
 
   TH1D *hpriorOld = hpreP->ProjectionX("measOld",hpreP->GetYaxis()->FindBin(ptmin+0.001),hpreP->GetYaxis()->FindBin(ptmax-0.001),0,-1);
 
@@ -128,8 +131,17 @@ void DrawLc3D(Int_t step=1,Float_t ptmin=0,Float_t ptmax=10){
 
   printf("signal = %f(true) %f(meas) -- delta  = %f (%f) --> Relative Error = %f(stat=%f, fit=%f)%c\n",truesig,meassig,meassig-truesig,deltasig,(meassig-truesig)/truesig*100,100./sqrt(TMath::Abs(truesig)),fiterror*100,'%');
 
-  printf("significance = %f\n",real->Integral()/sqrt(backgrd));
+  printf("significance = %f\n",hreal->Integral(1,hreal->GetNbinsX())/sqrt(backgrd));
+  printf("significance measured = %f\n",meassig/sqrt(backgrd));
 
-  printf("reco Lambdac = %i\n",real->Integral());
+  printf("reco Lambdac = %i\n",hreal->Integral(1,hreal->GetNbinsX()));
 
+  new TCanvas();
+  hmypid->Draw();
+  hmypid->Fit(bw,"EI","",2.25,2.32);
+  for(Int_t i=0;i < 3;i++) bwsig->SetParameter(i,bw->GetParameter(i));
+
+  Float_t mypidsig = bwsig->Integral(2.28646-3*0.008,2.28646+3*0.008) / hmypid->GetBinWidth(1);
+  printf("my pid signal = %f\n",mypidsig);
+  printf("my pid significance = %f\n",mypidsig/sqrt(backgrd));
 }

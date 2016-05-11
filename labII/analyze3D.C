@@ -55,6 +55,10 @@ void analyze(Int_t step=0);
 
 Float_t GetPolariz(particle moth,particle dau);
 
+// method you can use to manage your own PID
+Int_t passMyPID(Float_t p,Float_t pt,Float_t TPCsign,Float_t TOFsign);
+Int_t passMyPID2(Float_t p,Float_t pt,Float_t TPCsign,Float_t TOFsign);
+
 int main(int argc, char* argv[]){
   Int_t nstep=0;
   if(argc > 1){
@@ -152,19 +156,19 @@ void analyze(Int_t step){
   TH3D *priorsLc[3][3][3];
   TH3D *newpriorsLc[3][3][3];
   TH3D *truePidLc[3][3][3];
-  TH3D *trueLc;
+  TH3D *trueLc,*mypidLc;
 
   TH3D *priorsLcbar[3][3][3];
   TH3D *newpriorsLcbar[3][3][3];
   TH3D *truePidLcbar[3][3][3];
-  TH3D *trueLcbar;
+  TH3D *trueLcbar,*mypidLcbar;
 
   Int_t nbinPtFrKa = 4;
   Int_t nbinPtFrPi = 4;
   Int_t nbinY = 5;
   Int_t nbinpol=nbinPtFrKa*nbinPtFrPi*nbinY;
   Double_t normbin = 1./nbinpol;
-  Int_t nbinmlc = 200;
+  Int_t nbinmlc = 50;
 
   const char *spec[3] = {"Pi","Ka","Pr"};
 
@@ -300,7 +304,10 @@ void analyze(Int_t step){
 
   trueLc =  new TH3D(Form("trueLc"),Form("#Lambda_{c}^{+} true;m_{#piKp} (GeV/#it{c}^2);p_{T} (GeV/#it{c});N"),nbinmlc,2.1,2.5,40,0,10,nbinpol,0,1.);
   trueLcbar =  new TH3D(Form("trueLcbar"),Form("#overline{#Lambda}_{c}^{-} true;m_{#piKp} (GeV/#it{c}^2);p_{T} (GeV/#it{c});N"),nbinmlc,2.1,2.5,40,0,10,nbinpol,0,1);
-  
+
+  mypidLc =  new TH3D(Form("mypidLc"),Form("#Lambda_{c}^{+} true;m_{#piKp} (GeV/#it{c}^2);p_{T} (GeV/#it{c});N"),nbinmlc,2.1,2.5,40,0,10,nbinpol,0,1.);
+  mypidLcbar =  new TH3D(Form("mypidLcbar"),Form("#Lambda_{c}^{+} true;m_{#piKp} (GeV/#it{c}^2);p_{T} (GeV/#it{c});N"),nbinmlc,2.1,2.5,40,0,10,nbinpol,0,1.);
+
   // define particle types (particle type array)
   particle::AddParticleType("pi+",0.139,1); // 0
   particle::AddParticleType("pi-",0.139,-1); // 1
@@ -337,6 +344,8 @@ void analyze(Int_t step){
 
   Float_t weightsPos[20000][3];
   Float_t weightsNeg[20000][3];
+  Int_t passMyPIDPos[20000];
+  Int_t passMyPIDNeg[20000];
 
   Int_t npos=0;
   Int_t nneg=0;
@@ -495,6 +504,8 @@ void analyze(Int_t step){
 		else isp3 = 2;
 		truePidLc[isp1][isp2][isp3]->Fill(invmass,ptComb3prong,polar);
 
+		if(passMyPIDPos[ip] && passMyPIDPos[jn] && passMyPIDPos[kp]) mypidLc->Fill(invmass,ptComb3prong,polar);
+
 		GetProb3(weightsPos[ip],weightsNeg[jn],weightsPos[kp],priors3,prob3);
 		
 		for(Int_t ipr=0;ipr<3;ipr++)
@@ -567,6 +578,9 @@ void analyze(Int_t step){
 	ppos[npos].ChangeParticleType(id);
 	ppos[npos].SetP(pt*cos(phi),pt*sin(phi),pz);
 	ppos[npos].SetMother(mother);
+
+	passMyPIDPos[npos] = passMyPID(TMath::Sqrt(pt*pt+pz*pz),pt,signalTPC,signalTOF);
+
 	npos++;
       }
       else if(t->GetLeaf("reco")->GetValue()){
@@ -586,6 +600,9 @@ void analyze(Int_t step){
 	pneg[nneg].ChangeParticleType(id);
 	pneg[nneg].SetP(pt*cos(phi),pt*sin(phi),pz);
 	pneg[nneg].SetMother(mother);
+
+	passMyPIDNeg[nneg] = passMyPID(TMath::Sqrt(pt*pt+pz*pz),pt,signalTPC,signalTOF);
+
 	nneg++;
       }
       // perform the analysis on the single species
@@ -693,7 +710,7 @@ void analyze(Int_t step){
 	invmass = TMath::Sqrt(invmass);
 	ptComb3prong = TMath::Sqrt(ptComb3prong);
 
-	if(lambdacGood(ptComb3prong,ptPi,ptKa,ptPr))
+	if(lambdacGood(ptComb3prong,ptPi,ptKa,ptPr) && ptComb3prong<10)
 	  trueLc->Fill(invmass,ptComb3prong,polar);  
 	// 	printf("Lambda_c\n");
       }
@@ -857,7 +874,8 @@ void analyze(Int_t step){
   truePhi->Write();
   trueLc->Write();
   trueLcbar->Write();
-      
+  mypidLc->Write();
+  mypidLcbar->Write();
   fout->Close();
 }
 
@@ -1025,6 +1043,37 @@ Int_t lambdacGood(Float_t ptLc,Float_t ptPi,Float_t ptKa,Float_t ptPr){
   if(ptPi < ptminPi) return 0;
   if(ptKa < ptminKa) return 0;
   if(ptPr < ptminPr) return 0;
+
+  return 1;
+}
+
+Int_t passMyPID(Float_t p,Float_t pt,Float_t TPCsign,Float_t TOFsign){
+  Float_t expectPiTPC = fTPCpi->Eval(p);
+  Float_t expectKaTPC = fTPCka->Eval(p);
+  Float_t expectPrTPC = fTPCpr->Eval(p);
+  
+  if(TOFsign > -999){
+    Float_t expectPiTOF = fTOFpi->Eval(p,pt/p);
+    Float_t expectKaTOF = fTOFka->Eval(p,pt/p);
+    Float_t expectPrTOF = fTOFpr->Eval(p,pt/p);
+
+  }
+
+  // for example TPC Nsigma variable for pions is: TPCsign - expectPiTPC
+  // for example TOF Nsigma variable for pions is: TOFsign - expectPiTOF (please check the TOF is available: TOFsign > -999)
+
+
+  return 1;
+}
+
+Int_t passMyPID2(Float_t p,Float_t pt,Float_t TPCsign,Float_t TOFsign){
+  Float_t weights[3],prob[3];
+  ComputeWeightsALICE(weights,TPCsign,TOFsign,pt,p);
+
+  // define your priors
+  Float_t priors[3] = {1,1,1};
+
+  GetProb1(weights,priors,prob);
 
   return 1;
 }
