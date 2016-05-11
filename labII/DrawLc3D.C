@@ -32,7 +32,7 @@ void DrawLc3D(Int_t step=1,Float_t ptmin=0,Float_t ptmax=10){
   hpreP->RebinX(rebin);
   hPion->RebinX(rebin);
   htrueLc->RebinX(rebin);
-  hmypidLc->RebinX(rebin);
+  if(hmypidLc) hmypidLc->RebinX(rebin);
 
   TH1D *hprior = hcurP->ProjectionX("meas",hcurP->GetYaxis()->FindBin(ptmin+0.001),hcurP->GetYaxis()->FindBin(ptmax-0.001),0,-1);
 
@@ -40,7 +40,8 @@ void DrawLc3D(Int_t step=1,Float_t ptmin=0,Float_t ptmax=10){
 
   TH1D *hreal = htrueLc->ProjectionX("real",hcurT->GetYaxis()->FindBin(ptmin+0.001),hcurT->GetYaxis()->FindBin(ptmax-0.001),0,-1);
 
-  TH1D *hmypid = hmypidLc->ProjectionX("mypid",hcurT->GetYaxis()->FindBin(ptmin+0.001),hcurT->GetYaxis()->FindBin(ptmax-0.001),0,-1);
+  TH1D *hmypid = NULL;
+  if(hmypidLc) hmypid = hmypidLc->ProjectionX("mypid",hcurT->GetYaxis()->FindBin(ptmin+0.001),hcurT->GetYaxis()->FindBin(ptmax-0.001),0,-1);
 
   TH1D *hpriorOld = hpreP->ProjectionX("measOld",hpreP->GetYaxis()->FindBin(ptmin+0.001),hpreP->GetYaxis()->FindBin(ptmax-0.001),0,-1);
 
@@ -135,6 +136,8 @@ void DrawLc3D(Int_t step=1,Float_t ptmin=0,Float_t ptmax=10){
   printf("significance measured = %f\n",meassig/sqrt(backgrd));
 
   printf("reco Lambdac = %i\n",hreal->Integral(1,hreal->GetNbinsX()));
+
+  if(!hmypidLc) return;
 
   new TCanvas();
   hmypid->Draw();
