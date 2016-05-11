@@ -93,6 +93,9 @@ void DrawLc3D(Int_t step=1,Float_t ptmin=0,Float_t ptmax=10){
   hprior->Draw("SAME");
   hprior->Fit(bw,"EI","",2.15,2.45);
 
+  Float_t fiterror = 0;
+  if(bw->GetParameter(0)) fiterror = TMath::Abs(bw->GetParError(0)/bw->GetParameter(0));
+
   hreal->Draw("SAME");
 
   for(Int_t i=0;i < 3;i++) bwsig->SetParameter(i,bw->GetParameter(i));
@@ -123,7 +126,7 @@ void DrawLc3D(Int_t step=1,Float_t ptmin=0,Float_t ptmax=10){
 
   Float_t deltasig = bwsig->Integral(2.28646-3*0.008,2.28646+3*0.008) / hr->GetBinWidth(1);
 
-  printf("signal = %f(true) %f(meas) -- delta  = %f (%f) --> Precision = %f(stat=%f)%c\n",truesig,meassig,meassig-truesig,deltasig,(meassig-truesig)/truesig*100,100./sqrt(TMath::Abs(truesig)),'%');
+  printf("signal = %f(true) %f(meas) -- delta  = %f (%f) --> Relative Error = %f(stat=%f, fit=%f)%c\n",truesig,meassig,meassig-truesig,deltasig,(meassig-truesig)/truesig*100,100./sqrt(TMath::Abs(truesig)),fiterror*100,'%');
 
   printf("significance = %f\n",truesig/sqrt(backgrd));
 
