@@ -65,7 +65,7 @@ void DrawLc3D(Int_t step=1,Float_t ptmin=0,Float_t ptmax=10){
 
   }
 
-  TF1 *bw = new TF1("bw","gaus(0) + pol1(3)",2.23,2.3);
+  TF1 *bw = new TF1("bw","gaus(0) + pol1(3)",2.23,2.35);
   TF1 *bwsig = new TF1("bw","gaus(0)",0.8,1);
 
   bw->SetLineColor(2);
@@ -83,7 +83,7 @@ void DrawLc3D(Int_t step=1,Float_t ptmin=0,Float_t ptmax=10){
   hprior->SetMinimum(0);
   htrue->Draw("SAME");
   htrue->SetLineColor(2);
-  htrue->Fit(bw,"","",2.25,2.4);
+  htrue->Fit(bw,"EI","",2.25,2.32);
 
   for(Int_t i=0;i < 3;i++) bwsig->SetParameter(i,bw->GetParameter(i));
   
@@ -91,7 +91,7 @@ void DrawLc3D(Int_t step=1,Float_t ptmin=0,Float_t ptmax=10){
   Float_t backgrd = bw->Integral(2.28646-3*0.008,2.28646+3*0.008) / htrue->GetBinWidth(1);
 
   hprior->Draw("SAME");
-  hprior->Fit(bw,"","",2.25,2.4);
+  hprior->Fit(bw,"EI","",2.25,2.32);
 
   Float_t fiterror = 0;
   if(bw->GetParameter(0)) fiterror = TMath::Abs(bw->GetParError(0)/bw->GetParameter(0));
@@ -128,7 +128,7 @@ void DrawLc3D(Int_t step=1,Float_t ptmin=0,Float_t ptmax=10){
 
   printf("signal = %f(true) %f(meas) -- delta  = %f (%f) --> Relative Error = %f(stat=%f, fit=%f)%c\n",truesig,meassig,meassig-truesig,deltasig,(meassig-truesig)/truesig*100,100./sqrt(TMath::Abs(truesig)),fiterror*100,'%');
 
-  printf("significance = %f\n",truesig/sqrt(backgrd));
+  printf("significance = %f\n",real->Integral()/sqrt(backgrd));
 
   printf("reco Lambdac = %i\n",real->Integral());
 
