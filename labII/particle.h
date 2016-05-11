@@ -38,6 +38,11 @@ class particle //: public TObject
   double GetPz()const {return fPz;}
   double GetMass() const;
   double GetEnergy() const;
+  double GetP() const {return sqrt(fPx*fPx+fPy*fPy+fPz*fPz);}
+  double GetPt() const {return sqrt(fPx*fPx+fPy*fPy);}
+
+  double GetEta() const;
+  double GetY() const;
 
   int GetMother() const {return fMother;}
   void SetMother(int mot) {fMother=mot;}

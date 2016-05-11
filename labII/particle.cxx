@@ -399,3 +399,13 @@ int particle::Decay3body(particle &dau1,particle &dau2,particle &dau3) const {
 
   return 0;
 }
+
+double particle::GetEta() const {
+  double p = GetP();
+  return 0.5*log((p+fPz)/(p-fPz));
+}
+
+double particle::GetY() const {
+  double e = GetEnergy();
+  return 0.5*log((e+fPz)/(e-fPz));
+}
