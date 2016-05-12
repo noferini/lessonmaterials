@@ -449,73 +449,75 @@ void analyze(Int_t step){
 	  }
 
 	  // Lambda_c^+ because reuses the same identities of the anti-K0* case: 1-> pi+, 2-> K-
-	  for(Int_t kp=0;kp < npos;kp++){
-	    if(kp == ip) continue;
-	    Float_t ptPr = sqrt(ppos[kp].GetPx()*ppos[kp].GetPx() + ppos[kp].GetPy()*ppos[kp].GetPy());
-
-	    d3.SetP(ppos[kp].GetPx(),ppos[kp].GetPy(),ppos[kp].GetPz());
-
-	    polarLc.SetP(d1.GetPx()+d2.GetPx()+d3.GetPx(),d1.GetPy()+d2.GetPy()+d3.GetPy(),d1.GetPz()+d2.GetPz()+d3.GetPz());
-
-	    invmass = d1.GetEnergy()+d2.GetEnergy()+d3.GetEnergy();
-	    invmass *= invmass;
-	    ptComb3prong = polarLc.GetPx()*polarLc.GetPx() + polarLc.GetPy()*polarLc.GetPy();
-
-	    //Float_t ptot = TMath::Sqrt(polarLc.GetPz()*polarLc.GetPz()+ptComb3prong);
-	    invmass -= ptComb3prong;
-	    ptComb3prong = TMath::Sqrt(ptComb3prong);
-	    invmass -= polarLc.GetPz()*polarLc.GetPz();
-	    invmass = TMath::Sqrt(invmass);
-	    
-
-
-	    // compute fraction of pt
- 	    Float_t pt1 = Int_t(ptPi/(ptPi+ptKa+ptPr)*nbinPtFrPi);
- 	    Float_t pt2 = Int_t(ptKa/(ptPi+ptKa+ptPr)*nbinPtFrKa);
-	    polar = TMath::Abs(polarLc.GetY());//ptComb3prong/ptot;//(pt2*nbinpol + pt1)*invpollc;
-
-// 	    if(polar > 1){
-// 	      printf("polar = %f (%f %f %f) %f\n",polar,d1.GetEta(),d2.GetEta(),d3.GetEta(),ptComb3prong);
-// 	      polarLc.Print();
-// 	      d1.Print();
-// 	      d2.Print();
-// 	      d3.Print();
-// 	    }
-
-	    if(lambdacGood(ptComb3prong,ptPi,ptKa,ptPr)){
-	      if(invmass > 2.1 && invmass < 2.5 && ptComb3prong < 10 && polar<1){ 
-		polar = ((pt1*nbinPtFrKa + pt2 + polar)*nbinY)*normbin;
-
-		if(polar < 0 || polar >= 1) printf("polar = %f\n",polar);
-
-		//Float_t polar=GetPolariz(polarLc,d3);
-		Int_t ibinx = priorsLc[0][0][0]->GetXaxis()->FindBin(invmass);
-		Int_t ibiny = priorsLc[0][0][0]->GetYaxis()->FindBin(ptComb3prong);
-		Int_t ibinz = priorsLc[0][0][0]->GetZaxis()->FindBin(polar);
-		
-		for(Int_t ipr=0;ipr<3;ipr++)
-		  for(Int_t jpr=0;jpr<3;jpr++)
-		    for(Int_t kpr=0;kpr<3;kpr++)
-		      priors3[ipr][jpr][kpr] = priorsLc[ipr][jpr][kpr]->GetBinContent(ibinx,ibiny,ibinz);
-		
-		Int_t isp3=ppos[kp].GetParticleType();
-		if(isp3 == 0 || isp3 == 1) isp3 = 0;
-		else if(isp3 == 2 || isp3 == 3) isp3 = 1;
-		else isp3 = 2;
-		truePidLc[isp1][isp2][isp3]->Fill(invmass,ptComb3prong,polar);
-
-		if(passMyPIDPos[ip] && passMyPIDPos[jn] && passMyPIDPos[kp]) mypidLc->Fill(invmass,ptComb3prong,polar);
-
-		GetProb3(weightsPos[ip],weightsNeg[jn],weightsPos[kp],priors3,prob3);
-		
-		for(Int_t ipr=0;ipr<3;ipr++)
-		  for(Int_t jpr=0;jpr<3;jpr++)
-		    for(Int_t kpr=0;kpr<3;kpr++){
-		      newpriorsLc[ipr][jpr][kpr]->Fill(invmass,ptComb3prong,polar,prob3[ipr][jpr][kpr]);
-		    }
+	  // to avoid to run the next loop if gerneral condition are not satisfied
+	  if(ptPi > ptminPi && ptKa > ptminKa){
+	    for(Int_t kp=0;kp < npos;kp++){
+	      if(kp == ip) continue;
+	      Float_t ptPr = sqrt(ppos[kp].GetPx()*ppos[kp].GetPx() + ppos[kp].GetPy()*ppos[kp].GetPy());
+	      
+	      d3.SetP(ppos[kp].GetPx(),ppos[kp].GetPy(),ppos[kp].GetPz());
+	      
+	      polarLc.SetP(d1.GetPx()+d2.GetPx()+d3.GetPx(),d1.GetPy()+d2.GetPy()+d3.GetPy(),d1.GetPz()+d2.GetPz()+d3.GetPz());
+	      
+	      invmass = d1.GetEnergy()+d2.GetEnergy()+d3.GetEnergy();
+	      invmass *= invmass;
+	      ptComb3prong = polarLc.GetPx()*polarLc.GetPx() + polarLc.GetPy()*polarLc.GetPy();
+	      
+	      //Float_t ptot = TMath::Sqrt(polarLc.GetPz()*polarLc.GetPz()+ptComb3prong);
+	      invmass -= ptComb3prong;
+	      ptComb3prong = TMath::Sqrt(ptComb3prong);
+	      invmass -= polarLc.GetPz()*polarLc.GetPz();
+	      invmass = TMath::Sqrt(invmass);
+	      
+	      
+	      
+	      // compute fraction of pt
+	      Float_t pt1 = Int_t(ptPi/(ptPi+ptKa+ptPr)*nbinPtFrPi);
+	      Float_t pt2 = Int_t(ptKa/(ptPi+ptKa+ptPr)*nbinPtFrKa);
+	      polar = TMath::Abs(polarLc.GetY());//ptComb3prong/ptot;//(pt2*nbinpol + pt1)*invpollc;
+	      
+	      // 	    if(polar > 1){
+	      // 	      printf("polar = %f (%f %f %f) %f\n",polar,d1.GetEta(),d2.GetEta(),d3.GetEta(),ptComb3prong);
+	      // 	      polarLc.Print();
+	      // 	      d1.Print();
+	      // 	      d2.Print();
+	      // 	      d3.Print();
+	      // 	    }
+	      
+	      if(lambdacGood(ptComb3prong,ptPi,ptKa,ptPr)){
+		if(invmass > 2.1 && invmass < 2.5 && ptComb3prong < 10 && polar<1){ 
+		  polar = ((pt1*nbinPtFrKa + pt2 + polar)*nbinY)*normbin;
+		  
+		  if(polar < 0 || polar >= 1) printf("polar = %f\n",polar);
+		  
+		  //Float_t polar=GetPolariz(polarLc,d3);
+		  Int_t ibinx = priorsLc[0][0][0]->GetXaxis()->FindBin(invmass);
+		  Int_t ibiny = priorsLc[0][0][0]->GetYaxis()->FindBin(ptComb3prong);
+		  Int_t ibinz = priorsLc[0][0][0]->GetZaxis()->FindBin(polar);
+		  
+		  for(Int_t ipr=0;ipr<3;ipr++)
+		    for(Int_t jpr=0;jpr<3;jpr++)
+		      for(Int_t kpr=0;kpr<3;kpr++)
+			priors3[ipr][jpr][kpr] = priorsLc[ipr][jpr][kpr]->GetBinContent(ibinx,ibiny,ibinz);
+		  
+		  Int_t isp3=ppos[kp].GetParticleType();
+		  if(isp3 == 0 || isp3 == 1) isp3 = 0;
+		  else if(isp3 == 2 || isp3 == 3) isp3 = 1;
+		  else isp3 = 2;
+		  truePidLc[isp1][isp2][isp3]->Fill(invmass,ptComb3prong,polar);
+		  
+		  if(passMyPIDPos[ip] && passMyPIDPos[jn] && passMyPIDPos[kp]) mypidLc->Fill(invmass,ptComb3prong,polar);
+		  
+		  GetProb3(weightsPos[ip],weightsNeg[jn],weightsPos[kp],priors3,prob3);
+		  
+		  for(Int_t ipr=0;ipr<3;ipr++)
+		    for(Int_t jpr=0;jpr<3;jpr++)
+		      for(Int_t kpr=0;kpr<3;kpr++){
+			newpriorsLc[ipr][jpr][kpr]->Fill(invmass,ptComb3prong,polar,prob3[ipr][jpr][kpr]);
+		      }
+		}
 	      }
 	    }
-
 	  }
 
 	  // Phi case
