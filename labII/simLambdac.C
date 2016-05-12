@@ -132,9 +132,10 @@ int main(){
   Int_t n=0;
 
   // branching ratio for lambda_c
-  Float_t br1 = 0.028; // Lambda_c -> pi K p no resonant
-  Float_t br2 = 0.016; // Lambda_c -> K0* p -> pi K p
-  Float_t br3 = 0.0086; // Lambda_c -> K Delta -> pi K p 
+  Float_t br1 = 0.038; // Lambda_c -> pi K p no resonant
+  Float_t br2 = 0.0213; // Lambda_c -> K0* p -> pi K p
+  Float_t br3 = 0.0118; // Lambda_c -> K Delta -> pi K p 
+  Float_t br4 = 0.024*0.225; // Lambda_c -> Lambda(1520) pi (x 0.225)-> pi K p 
 
   gRandom->SetSeed(0);
 
@@ -177,10 +178,11 @@ int main(){
   particle::AddParticleType("K0*",0.896,0,5.05e-05); // 6
   particle::AddParticleType("K0bar*",0.896,0,5.05e-05); // 7
   particle::AddParticleType("Phi",1.02,0,0.00426); // 8
-  particle::AddParticleType("Delta++",1.232,2,0.000118); // 9 
-  particle::AddParticleType("Delta--",1.232,-2,0.000118);  // 10
+  particle::AddParticleType("Delta++",1.232,2,0.0000118); // 9 
+  particle::AddParticleType("Delta--",1.232,-2,0.0000118);  // 10
   particle::AddParticleType("Lambdac+",2.28646,1,0.008); // 11
   particle::AddParticleType("Lambdacbar-",2.28646,-1,0.008); // 12
+  particle::AddParticleType("Lambda1520",1.5195,-1,0.0000156); // 12
 
 
   // define same dummy particles useful to perform decays
@@ -188,6 +190,7 @@ int main(){
   particle res2("K0bar*");
   particle res3("Delta++");
   particle res4("Delta--");
+  particle res5("Lambda1520");
   particle d1("pi+");
   particle d2("K+");
   particle d3("p+");
@@ -412,6 +415,26 @@ int main(){
 	  else sig = fseparation->Eval(pt);
 	  FillTree(d3);
 	}
+	else if(xvar < br1+br2+br3+br4){ // Delta++
+	  part.Decay2body(d1,res5);
+	  res5.Decay2body(d5,d3);
+	  
+	  pt = TMath::Sqrt(d1.GetPx()*d1.GetPx() + d1.GetPy()*d1.GetPy());
+	  if(kALICEseparation) sig = -fseparationPiKa->Eval(pt);
+	  else sig = -fseparation->Eval(pt);
+	  FillTree(d1);
+	  pt = TMath::Sqrt(res5.GetPx()*res5.GetPx() + res5.GetPy()*res5.GetPy());
+	  sig = -999;
+	  FillTree(res5);
+	  mother = res5.GetParticleType();
+	  pt = TMath::Sqrt(d3.GetPx()*d3.GetPx() + d3.GetPy()*d3.GetPy());
+	  if(kALICEseparation) sig = fseparationKaPr->Eval(pt);
+	  else sig = fseparation->Eval(pt);
+	  FillTree(d3);
+	  pt = TMath::Sqrt(d5.GetPx()*d5.GetPx() + d5.GetPy()*d5.GetPy());
+	  sig = 0;
+	  FillTree(d5);
+	}
       }
       else{
 	if(xvar < br1){ // no resonant
@@ -469,6 +492,26 @@ int main(){
 	  if(kALICEseparation) sig = fseparationKaPr->Eval(pt);
 	  else sig = fseparation->Eval(pt);
 	  FillTree(d6);
+	}
+	else if(xvar < br1+br2+br3+br4){ // Delta++
+	  part.Decay2body(d4,res5);
+	  res5.Decay2body(d2,d6);
+	  
+	  pt = TMath::Sqrt(d4.GetPx()*d4.GetPx() + d4.GetPy()*d4.GetPy());
+	  if(kALICEseparation) sig = -fseparationPiKa->Eval(pt);
+	  else sig = -fseparation->Eval(pt);
+	  FillTree(d4);
+	  pt = TMath::Sqrt(res5.GetPx()*res5.GetPx() + res5.GetPy()*res5.GetPy());
+	  sig = -999;
+	  FillTree(res5);
+	  mother = res5.GetParticleType();
+	  pt = TMath::Sqrt(d6.GetPx()*d6.GetPx() + d6.GetPy()*d6.GetPy());
+	  if(kALICEseparation) sig = fseparationKaPr->Eval(pt);
+	  else sig = fseparation->Eval(pt);
+	  FillTree(d6);
+	  pt = TMath::Sqrt(d2.GetPx()*d2.GetPx() + d2.GetPy()*d2.GetPy());
+	  sig = 0;
+	  FillTree(d2);
 	}
       }
     }
