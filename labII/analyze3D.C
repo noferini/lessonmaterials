@@ -56,8 +56,8 @@ void analyze(Int_t step=0);
 Float_t GetPolariz(particle moth,particle dau);
 
 // method you can use to manage your own PID
-Int_t passMyPID(Float_t p,Float_t pt,Float_t TPCsign,Float_t TOFsign);
-Int_t passMyPID2(Float_t p,Float_t pt,Float_t TPCsign,Float_t TOFsign);
+Int_t passMyPID(Int_t isp,Float_t p,Float_t pt,Float_t TPCsign,Float_t TOFsign);
+Int_t passMyPID2(Int_t isp,Float_t p,Float_t pt,Float_t TPCsign,Float_t TOFsign);
 
 int main(int argc, char* argv[]){
   Int_t nstep=0;
@@ -163,12 +163,13 @@ void analyze(Int_t step){
   TH3D *truePidLcbar[3][3][3];
   TH3D *trueLcbar,*mypidLcbar;
 
-  Int_t nbinPtFrKa = 4;
-  Int_t nbinPtFrPi = 4;
-  Int_t nbinY = 5;
+  Int_t nbinPtFrKa = 8;
+  Int_t nbinPtFrPi = 8;
+  Int_t nbinY = 4;
   Int_t nbinpol=nbinPtFrKa*nbinPtFrPi*nbinY;
   Double_t normbin = 1./nbinpol;
-  Int_t nbinmlc = 50;
+  Int_t nbinmlc = 100;
+  Int_t nbinptlc = 10;
 
   const char *spec[3] = {"Pi","Ka","Pr"};
 
@@ -208,11 +209,11 @@ void analyze(Int_t step){
 	}
 
 	for(Int_t k=0; k< 3;k++){
-	  priorsLc[i][j][k] =  new TH3D(Form("oldpriorsLc%s%s%s",spec[i],spec[j],spec[k]),Form("#Lambda_{c}^{+} priors for %s-%s-%s;m_{#piKp} (GeV/#it{c}^2);p_{T} (GeV/#it{c});N",spec[i],spec[j],spec[k]),nbinmlc,2.1,2.5,40,0,10,nbinpol,0,1.);
-	  priorsLcbar[i][j][k] =  new TH3D(Form("oldpriorsLcbar%s%s%s",spec[i],spec[j],spec[k]),Form("#overline{#Lambda}_{c}^{-} priors for %s-%s-%s;m_{#piKp} (GeV/#it{c}^2);p_{T} (GeV/#it{c});N",spec[i],spec[j],spec[k]),nbinmlc,2.1,2.5,40,0,10,nbinpol,0,1.);
+	  priorsLc[i][j][k] =  new TH3D(Form("oldpriorsLc%s%s%s",spec[i],spec[j],spec[k]),Form("#Lambda_{c}^{+} priors for %s-%s-%s;m_{#piKp} (GeV/#it{c}^2);p_{T} (GeV/#it{c});N",spec[i],spec[j],spec[k]),nbinmlc,2.1,2.5,nbinptlc,0,10,nbinpol,0,1.);
+	  priorsLcbar[i][j][k] =  new TH3D(Form("oldpriorsLcbar%s%s%s",spec[i],spec[j],spec[k]),Form("#overline{#Lambda}_{c}^{-} priors for %s-%s-%s;m_{#piKp} (GeV/#it{c}^2);p_{T} (GeV/#it{c});N",spec[i],spec[j],spec[k]),nbinmlc,2.1,2.5,nbinptlc,0,10,nbinpol,0,1.);
 	  if(i==0 && j==0 && k==0){
-	    for(Int_t ibx=1;ibx<=200;ibx++)
-	      for(Int_t iby=1;iby<=40;iby++){
+	    for(Int_t ibx=1;ibx<=nbinmlc;ibx++)
+	      for(Int_t iby=1;iby<=nbinptlc;iby++){
 		for(Int_t ibz=1;ibz <= nbinpol;ibz++){
 		  priorsLc[i][j][k]->SetBinContent(ibx,iby,ibz,1);
 		  priorsLcbar[i][j][k]->SetBinContent(ibx,iby,ibz,1);
@@ -272,8 +273,8 @@ void analyze(Int_t step){
       newpriorsKs[i][j] =  new TH3D(Form("priorsKs%s%s",spec[i],spec[j]),Form("K^{0*} priors for %s-%s;m_{#piK} (GeV/#it{c}^2);p_{T} (GeV/#it{c});N",spec[i],spec[j]),200,0.4,1.4,40,0,10,nbinpol,-1.001,1.001);
       newpriorsPhi[i][j] =  new TH2D(Form("priorsPhi%s%s",spec[i],spec[j]),Form("#phi priors for %s-%s;m_{KK} (GeV/#it{c}^2);p_{T} (GeV/#it{c});N",spec[i],spec[j]),100,0.98,1.05,40,0,10);
       for(Int_t k=0; k< 3;k++){
-	newpriorsLc[i][j][k] =  new TH3D(Form("priorsLc%s%s%s",spec[i],spec[j],spec[k]),Form("#Lambda_{c}^{+} priors for %s-%s-%s;m_{#piKp} (GeV/#it{c}^2);p_{T} (GeV/#it{c});N",spec[i],spec[j],spec[k]),nbinmlc,2.1,2.5,40,0,10,nbinpol,0,1.);
-	newpriorsLcbar[i][j][k] =  new TH3D(Form("priorsLcbar%s%s%s",spec[i],spec[j],spec[k]),Form("#overline{#Lambda}_{c}^{-} priors for %s-%s-%s;m_{#piKp} (GeV/#it{c}^2);p_{T} (GeV/#it{c});N",spec[i],spec[j],spec[k]),nbinmlc,2.1,2.5,40,0,10,nbinpol,0,1.);
+	newpriorsLc[i][j][k] =  new TH3D(Form("priorsLc%s%s%s",spec[i],spec[j],spec[k]),Form("#Lambda_{c}^{+} priors for %s-%s-%s;m_{#piKp} (GeV/#it{c}^2);p_{T} (GeV/#it{c});N",spec[i],spec[j],spec[k]),nbinmlc,2.1,2.5,nbinptlc,0,10,nbinpol,0,1.);
+	newpriorsLcbar[i][j][k] =  new TH3D(Form("priorsLcbar%s%s%s",spec[i],spec[j],spec[k]),Form("#overline{#Lambda}_{c}^{-} priors for %s-%s-%s;m_{#piKp} (GeV/#it{c}^2);p_{T} (GeV/#it{c});N",spec[i],spec[j],spec[k]),nbinmlc,2.1,2.5,nbinptlc,0,10,nbinpol,0,1.);
       }
     }
   }
@@ -292,8 +293,8 @@ void analyze(Int_t step){
       truePidPhi[i][j] =  new TH2D(Form("truePidPhi%s%s",spec[i],spec[j]),Form("#phi truePid for %s-%s;m_{KK} (GeV/#it{c}^2);p_{T} (GeV/#it{c});N",spec[i],spec[j]),100,0.98,1.05,40,0,10);
 
       for(Int_t k=0; k< 3;k++){
-	truePidLc[i][j][k] =  new TH3D(Form("truePidLc%s%s%s",spec[i],spec[j],spec[k]),Form("#Lambda_{c}^{+} truePid for %s-%s-%s;m_{#piKp} (GeV/#it{c}^2);p_{T} (GeV/#it{c});N",spec[i],spec[j],spec[k]),nbinmlc,2.1,2.5,40,0,10,nbinpol,0,1.);
-	truePidLcbar[i][j][k] =  new TH3D(Form("truePidLcbar%s%s%s",spec[i],spec[j],spec[k]),Form("#overline{#Lambda}_{c}^{-} truePid for %s-%s-%s;m_{#piKp} (GeV/#it{c}^2);p_{T} (GeV/#it{c});N",spec[i],spec[j],spec[k]),nbinmlc,2.1,2.5,40,0,10,nbinpol,0,1.);
+	truePidLc[i][j][k] =  new TH3D(Form("truePidLc%s%s%s",spec[i],spec[j],spec[k]),Form("#Lambda_{c}^{+} truePid for %s-%s-%s;m_{#piKp} (GeV/#it{c}^2);p_{T} (GeV/#it{c});N",spec[i],spec[j],spec[k]),nbinmlc,2.1,2.5,nbinptlc,0,10,nbinpol,0,1.);
+	truePidLcbar[i][j][k] =  new TH3D(Form("truePidLcbar%s%s%s",spec[i],spec[j],spec[k]),Form("#overline{#Lambda}_{c}^{-} truePid for %s-%s-%s;m_{#piKp} (GeV/#it{c}^2);p_{T} (GeV/#it{c});N",spec[i],spec[j],spec[k]),nbinmlc,2.1,2.5,nbinptlc,0,10,nbinpol,0,1.);
       }
 
     }
@@ -302,11 +303,11 @@ void analyze(Int_t step){
   trueKs =  new TH3D(Form("trueKs"),Form("K^{0*} true;m_{#piK} (GeV/#it{c}^2);p_{T} (GeV/#it{c});N"),200,0.4,1.4,40,0,10,nbinpol,-1.001,1.001);
   truePhi =  new TH2D(Form("truePhi"),Form("#phi true;m_{KK} (GeV/#it{c}^2);p_{T} (GeV/#it{c});N"),100,0.98,1.05,40,0,10);
 
-  trueLc =  new TH3D(Form("trueLc"),Form("#Lambda_{c}^{+} true;m_{#piKp} (GeV/#it{c}^2);p_{T} (GeV/#it{c});N"),nbinmlc,2.1,2.5,40,0,10,nbinpol,0,1.);
-  trueLcbar =  new TH3D(Form("trueLcbar"),Form("#overline{#Lambda}_{c}^{-} true;m_{#piKp} (GeV/#it{c}^2);p_{T} (GeV/#it{c});N"),nbinmlc,2.1,2.5,40,0,10,nbinpol,0,1);
+  trueLc =  new TH3D(Form("trueLc"),Form("#Lambda_{c}^{+} true;m_{#piKp} (GeV/#it{c}^2);p_{T} (GeV/#it{c});N"),nbinmlc,2.1,2.5,nbinptlc,0,10,nbinpol,0,1.);
+  trueLcbar =  new TH3D(Form("trueLcbar"),Form("#overline{#Lambda}_{c}^{-} true;m_{#piKp} (GeV/#it{c}^2);p_{T} (GeV/#it{c});N"),nbinmlc,2.1,2.5,nbinptlc,0,10,nbinpol,0,1);
 
-  mypidLc =  new TH3D(Form("mypidLc"),Form("#Lambda_{c}^{+} true;m_{#piKp} (GeV/#it{c}^2);p_{T} (GeV/#it{c});N"),nbinmlc,2.1,2.5,40,0,10,nbinpol,0,1.);
-  mypidLcbar =  new TH3D(Form("mypidLcbar"),Form("#Lambda_{c}^{+} true;m_{#piKp} (GeV/#it{c}^2);p_{T} (GeV/#it{c});N"),nbinmlc,2.1,2.5,40,0,10,nbinpol,0,1.);
+  mypidLc =  new TH3D(Form("mypidLc"),Form("#Lambda_{c}^{+} true;m_{#piKp} (GeV/#it{c}^2);p_{T} (GeV/#it{c});N"),nbinmlc,2.1,2.5,nbinptlc,0,10,nbinpol,0,1.);
+  mypidLcbar =  new TH3D(Form("mypidLcbar"),Form("#Lambda_{c}^{+} true;m_{#piKp} (GeV/#it{c}^2);p_{T} (GeV/#it{c});N"),nbinmlc,2.1,2.5,nbinptlc,0,10,nbinpol,0,1.);
 
   // define particle types (particle type array)
   particle::AddParticleType("pi+",0.139,1); // 0
@@ -344,8 +345,8 @@ void analyze(Int_t step){
 
   Float_t weightsPos[20000][3];
   Float_t weightsNeg[20000][3];
-  Int_t passMyPIDPos[20000];
-  Int_t passMyPIDNeg[20000];
+  Int_t passMyPIDPos[20000][3];
+  Int_t passMyPIDNeg[20000][3];
 
   Int_t npos=0;
   Int_t nneg=0;
@@ -506,7 +507,7 @@ void analyze(Int_t step){
 		  else isp3 = 2;
 		  truePidLc[isp1][isp2][isp3]->Fill(invmass,ptComb3prong,polar);
 		  
-		  if(passMyPIDPos[ip] && passMyPIDPos[jn] && passMyPIDPos[kp]) mypidLc->Fill(invmass,ptComb3prong,polar);
+		  if(passMyPIDPos[ip][0] && passMyPIDPos[jn][1] && passMyPIDPos[kp][2]) mypidLc->Fill(invmass,ptComb3prong,polar);
 		  
 		  GetProb3(weightsPos[ip],weightsNeg[jn],weightsPos[kp],priors3,prob3);
 		  
@@ -581,7 +582,9 @@ void analyze(Int_t step){
 	ppos[npos].SetP(pt*cos(phi),pt*sin(phi),pz);
 	ppos[npos].SetMother(mother);
 
-	passMyPIDPos[npos] = passMyPID(TMath::Sqrt(pt*pt+pz*pz),pt,signalTPC,signalTOF);
+	passMyPIDPos[npos][0] = passMyPID(0,TMath::Sqrt(pt*pt+pz*pz),pt,signalTPC,signalTOF);
+	passMyPIDPos[npos][1] = passMyPID(1,TMath::Sqrt(pt*pt+pz*pz),pt,signalTPC,signalTOF);
+	passMyPIDPos[npos][2] = passMyPID(2,TMath::Sqrt(pt*pt+pz*pz),pt,signalTPC,signalTOF);
 
 	npos++;
       }
@@ -603,7 +606,9 @@ void analyze(Int_t step){
 	pneg[nneg].SetP(pt*cos(phi),pt*sin(phi),pz);
 	pneg[nneg].SetMother(mother);
 
-	passMyPIDNeg[nneg] = passMyPID(TMath::Sqrt(pt*pt+pz*pz),pt,signalTPC,signalTOF);
+	passMyPIDNeg[nneg][0] = passMyPID(0,TMath::Sqrt(pt*pt+pz*pz),pt,signalTPC,signalTOF);
+	passMyPIDNeg[nneg][1] = passMyPID(1,TMath::Sqrt(pt*pt+pz*pz),pt,signalTPC,signalTOF);
+	passMyPIDNeg[nneg][2] = passMyPID(2,TMath::Sqrt(pt*pt+pz*pz),pt,signalTPC,signalTOF);
 
 	nneg++;
       }
@@ -1049,26 +1054,28 @@ Int_t lambdacGood(Float_t ptLc,Float_t ptPi,Float_t ptKa,Float_t ptPr){
   return 1;
 }
 
-Int_t passMyPID(Float_t p,Float_t pt,Float_t TPCsign,Float_t TOFsign){
-  Float_t expectPiTPC = fTPCpi->Eval(p);
-  Float_t expectKaTPC = fTPCka->Eval(p);
-  Float_t expectPrTPC = fTPCpr->Eval(p);
+Int_t passMyPID(Int_t isp,Float_t p,Float_t pt,Float_t TPCsign,Float_t TOFsign){
+  // isp=0(pi), 1(ka), 2(pr)
+  Float_t expectTPC[3];
+  expectTPC[0]= fTPCpi->Eval(p);
+  expectTPC[1]= fTPCka->Eval(p);
+  expectTPC[2]= fTPCpr->Eval(p);
   
   if(TOFsign > -999){
-    Float_t expectPiTOF = fTOFpi->Eval(p,pt/p);
-    Float_t expectKaTOF = fTOFka->Eval(p,pt/p);
-    Float_t expectPrTOF = fTOFpr->Eval(p,pt/p);
-
+    Float_t expectTOF[3];
+    expectTOF[0] = fTOFpi->Eval(p,pt/p);
+    expectTOF[1] = fTOFka->Eval(p,pt/p);
+    expectTOF[2] = fTOFpr->Eval(p,pt/p);
   }
 
-  // for example TPC Nsigma variable for pions is: TPCsign - expectPiTPC
-  // for example TOF Nsigma variable for pions is: TOFsign - expectPiTOF (please check the TOF is available: TOFsign > -999)
+  // for example TPC Nsigma variable for pions is: TPCsign - expectTPC[0]
+  // for example TOF Nsigma variable for pions is: TOFsign - expectTOF[0] (please check the TOF is available: TOFsign > -999)
 
 
   return 1;
 }
 
-Int_t passMyPID2(Float_t p,Float_t pt,Float_t TPCsign,Float_t TOFsign){
+Int_t passMyPID2(Int_t isp,Float_t p,Float_t pt,Float_t TPCsign,Float_t TOFsign){
   Float_t weights[3],prob[3];
   ComputeWeightsALICE(weights,TPCsign,TOFsign,pt,p);
 
@@ -1076,6 +1083,9 @@ Int_t passMyPID2(Float_t p,Float_t pt,Float_t TPCsign,Float_t TOFsign){
   Float_t priors[3] = {1,1,1};
 
   GetProb1(weights,priors,prob);
+
+  // for example to require a probability > 50%
+  // if(prob[isp] < 0.5) return 0;
 
   return 1;
 }

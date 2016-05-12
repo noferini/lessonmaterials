@@ -145,6 +145,7 @@ void DrawLc3D(Int_t step=1,Float_t ptmin=0,Float_t ptmax=10){
   for(Int_t i=0;i < 3;i++) bwsig->SetParameter(i,bw->GetParameter(i));
 
   Float_t mypidsig = bwsig->Integral(2.28646-3*0.008,2.28646+3*0.008) / hmypid->GetBinWidth(1);
+  backgrd = bw->Integral(2.28646-3*0.008,2.28646+3*0.008) / hmypid->GetBinWidth(1);
   printf("my pid signal = %f\n",mypidsig);
   printf("my pid significance = %f\n",mypidsig/sqrt(backgrd));
 }
