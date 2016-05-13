@@ -1,4 +1,8 @@
 void DrawLc3D(Int_t step=1,Float_t ptmin=0,Float_t ptmax=10){
+  Double_t nev = 13E6;
+  Double_t nsig = 1.5E5;
+  Double_t nback = 1.5;
+
   TFile *fcur = TFile::Open(Form("step%i.root",step));
   TFile *fpre = TFile::Open(Form("step%i.root",step-1));
 
@@ -87,15 +91,16 @@ void DrawLc3D(Int_t step=1,Float_t ptmin=0,Float_t ptmax=10){
   hprior->SetMinimum(0);
   htrue->Draw("SAME");
   htrue->SetLineColor(2);
-  htrue->Fit(bw,"EI","",2.25,2.32);
+  htrue->Fit(bw,"EI","",2.15,2.42);
 
   for(Int_t i=0;i < 3;i++) bwsig->SetParameter(i,bw->GetParameter(i));
   
   Float_t truesig = bwsig->Integral(2.28646-3*0.008,2.28646+3*0.008) / htrue->GetBinWidth(1);
   Float_t backgrd = bw->Integral(2.28646-3*0.008,2.28646+3*0.008) / htrue->GetBinWidth(1);
+  backgrd -= truesig;
 
   hprior->Draw("SAME");
-  hprior->Fit(bw,"EI","",2.25,2.32);
+  hprior->Fit(bw,"EI","",2.15,2.42);
 
   Float_t fiterror = 0;
   if(bw->GetParameter(0)) fiterror = TMath::Abs(bw->GetParError(0)/bw->GetParameter(0));
@@ -132,8 +137,13 @@ void DrawLc3D(Int_t step=1,Float_t ptmin=0,Float_t ptmax=10){
 
   printf("signal = %f(true) %f(meas) -- delta  = %f (%f) --> Relative Error = %f(stat=%f, fit=%f)%c\n",truesig,meassig,meassig-truesig,deltasig,(meassig-truesig)/truesig*100,100./sqrt(TMath::Abs(truesig)),fiterror*100,'%');
 
-  printf("significance = %f\n",hreal->Integral(1,hreal->GetNbinsX())/sqrt(backgrd));
-  printf("significance measured = %f\n",meassig/sqrt(backgrd));
+  Float_t signal = hreal->Integral(1,hreal->GetNbinsX())*nev/nsig;
+  Float_t signalback = signal + backgrd*nev/nback;
+  Float_t signalmeas = meassig*nev/nsig;
+
+  printf("significance = %f (yield=%f)\n",signal/sqrt(signalback),signal);
+  printf("S/B = %f (back=%f)\n",signal/signalback,signalback);
+  printf("significance measured = %f\n",signal/sqrt(signalback));
 
   printf("reco Lambdac = %i\n",hreal->Integral(1,hreal->GetNbinsX()));
 
@@ -141,11 +151,15 @@ void DrawLc3D(Int_t step=1,Float_t ptmin=0,Float_t ptmax=10){
 
   new TCanvas();
   hmypid->Draw();
-  hmypid->Fit(bw,"EI","",2.25,2.32);
+  hmypid->Fit(bw,"EI","",2.15,2.42);
   for(Int_t i=0;i < 3;i++) bwsig->SetParameter(i,bw->GetParameter(i));
 
   Float_t mypidsig = bwsig->Integral(2.28646-3*0.008,2.28646+3*0.008) / hmypid->GetBinWidth(1);
   backgrd = bw->Integral(2.28646-3*0.008,2.28646+3*0.008) / hmypid->GetBinWidth(1);
+  backgrd -= mypidsig;
+  signal = mypidsig*nev/nsig;
+  signalback = signal + backgrd*nev/nback;
+
   printf("my pid signal = %f\n",mypidsig);
-  printf("my pid significance = %f\n",mypidsig/sqrt(backgrd));
+  printf("my pid significance = %f\n",signal/sqrt(signalback));
 }
