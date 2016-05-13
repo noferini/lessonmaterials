@@ -57,7 +57,28 @@ Float_t GetPolariz(particle moth,particle dau);
 
 // method you can use to manage your own PID
 Int_t passMyPID(Int_t isp,Float_t p,Float_t pt,Float_t TPCsign,Float_t TOFsign);
-Int_t passMyPID2(Int_t isp,Float_t p,Float_t pt,Float_t TPCsign,Float_t TOFsign);
+Int_t 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+passMyPID2(Int_t isp,Float_t p,Float_t pt,Float_t TPCsign,Float_t TOFsign);
 
 int main(int argc, char* argv[]){
   Int_t nstep=0;
@@ -323,6 +344,7 @@ void analyze(Int_t step){
   particle::AddParticleType("Delta--",1.232,-2,0.118);  // 10
   particle::AddParticleType("Lambdac+",2.28646,1,0.008); // 11
   particle::AddParticleType("Lambdacbar-",2.28646,-1,0.008); // 12
+  particle::AddParticleType("Lambda1520",1.5195,-1,0.0000156); // 12
 
   particle d1("pi+");
   particle d2("K+");
@@ -582,9 +604,9 @@ void analyze(Int_t step){
 	ppos[npos].SetP(pt*cos(phi),pt*sin(phi),pz);
 	ppos[npos].SetMother(mother);
 
-	passMyPIDPos[npos][0] = passMyPID(0,TMath::Sqrt(pt*pt+pz*pz),pt,signalTPC,signalTOF);
-	passMyPIDPos[npos][1] = passMyPID(1,TMath::Sqrt(pt*pt+pz*pz),pt,signalTPC,signalTOF);
-	passMyPIDPos[npos][2] = passMyPID(2,TMath::Sqrt(pt*pt+pz*pz),pt,signalTPC,signalTOF);
+	passMyPIDPos[npos][0] = passMyPID2(0,TMath::Sqrt(pt*pt+pz*pz),pt,signalTPC,signalTOF);
+	passMyPIDPos[npos][1] = passMyPID2(1,TMath::Sqrt(pt*pt+pz*pz),pt,signalTPC,signalTOF);
+	passMyPIDPos[npos][2] = passMyPID2(2,TMath::Sqrt(pt*pt+pz*pz),pt,signalTPC,signalTOF);
 
 	npos++;
       }
@@ -606,9 +628,9 @@ void analyze(Int_t step){
 	pneg[nneg].SetP(pt*cos(phi),pt*sin(phi),pz);
 	pneg[nneg].SetMother(mother);
 
-	passMyPIDNeg[nneg][0] = passMyPID(0,TMath::Sqrt(pt*pt+pz*pz),pt,signalTPC,signalTOF);
-	passMyPIDNeg[nneg][1] = passMyPID(1,TMath::Sqrt(pt*pt+pz*pz),pt,signalTPC,signalTOF);
-	passMyPIDNeg[nneg][2] = passMyPID(2,TMath::Sqrt(pt*pt+pz*pz),pt,signalTPC,signalTOF);
+	passMyPIDNeg[nneg][0] = passMyPID2(0,TMath::Sqrt(pt*pt+pz*pz),pt,signalTPC,signalTOF);
+	passMyPIDNeg[nneg][1] = passMyPID2(1,TMath::Sqrt(pt*pt+pz*pz),pt,signalTPC,signalTOF);
+	passMyPIDNeg[nneg][2] = passMyPID2(2,TMath::Sqrt(pt*pt+pz*pz),pt,signalTPC,signalTOF);
 
 	nneg++;
       }
@@ -1080,12 +1102,12 @@ Int_t passMyPID2(Int_t isp,Float_t p,Float_t pt,Float_t TPCsign,Float_t TOFsign)
   ComputeWeightsALICE(weights,TPCsign,TOFsign,pt,p);
 
   // define your priors
-  Float_t priors[3] = {1,1,1};
+  Float_t priors[3] = {5,3,2};
 
   GetProb1(weights,priors,prob);
 
   // for example to require a probability > 50%
-  // if(prob[isp] < 0.5) return 0;
+  if(prob[isp] < 0.3) return 0;
 
   return 1;
 }
