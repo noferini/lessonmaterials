@@ -22,9 +22,9 @@ TF1 *fTPCpi;
 TF1 *fTPCka;
 TF1 *fTPCpr;
 
-Float_t ptminPi = 0.4;
+Float_t ptminPi = 0.3;
 Float_t ptminKa = 0.4;
-Float_t ptminPr = 0.5;
+Float_t ptminPr = 0.6;
 
 // bethe block parameter
 Float_t fKp1=0.0283086;
@@ -1069,9 +1069,13 @@ Double_t BetheBlochAleph(Double_t *x,Double_t *par) {
 Int_t lambdacGood(Float_t ptLc,Float_t ptPi,Float_t ptKa,Float_t ptPr){
 
   //  printf("%f %f %f\n",ptPi,ptKa,ptPr);
-  if(ptPi < ptminPi) return 0;
-  if(ptKa < ptminKa) return 0;
-  if(ptPr < ptminPr) return 0;
+//   if(ptPi < ptminPi) return 0;
+//   if(ptKa < ptminKa) return 0;
+//   if(ptPr < ptminPr) return 0;
+
+  if(ptPi < ptLc*0.06 + 0.15) return 0;
+  if(ptKa < ptLc*0.12 + 0.18) return 0;
+  if(ptPr < ptLc*0.3) return 0;
 
   return 1;
 }
