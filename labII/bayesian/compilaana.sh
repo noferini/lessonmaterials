@@ -1,2 +1,5 @@
 #!/bin/bash
-c++ -I$ROOTSYS/include -L$ROOTSYS/lib -lCore -lCint -lRIO -lNet -lHist -lGraf -lGraf3d -lGpad -lTree -lRint -lPostscript -lMatrix -lPhysics -lMathCore -lThread -pthread -lm -ldl -rdynamic analyze.C ../particle.cxx ../particleType.cxx ../resonanceType.cxx -o ana.exe
+export LIBS=$(root-config --glibs)
+export CC=$(root-config --cflags)
+export LD=-Wl,--no-as-needed
+c++ -I../ $LD $CC $LIBS analyze3D.C ../particle.cxx ../particleType.cxx ../resonanceType.cxx -o ana.exe
